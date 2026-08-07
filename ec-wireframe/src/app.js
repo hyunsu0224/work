@@ -8,8 +8,11 @@ const state = {
   lang: "ko",
   device: "both",
   pageType: "top",
-  sections: [], // [{ comp, opts }]
+  showNotes: true, // 주석(wf-note·코멘트) 표시 여부
+  sections: [], // [{ comp, opts, comment }]
 };
+
+let selIdx = null; // 삽입 기준으로 선택된 섹션 index (null=맨 뒤 추가)
 
 let CSS = ""; // wireframe.css 원문
 
@@ -34,12 +37,17 @@ function sanitize(cand) {
   const lang = ["ko", "ja"].includes(cand.lang) ? cand.lang : "ko";
   const device = ["both", "pc", "sp"].includes(cand.device) ? cand.device : "both";
   const pageType = PAGE_TYPES.includes(cand.pageType) ? cand.pageType : "top";
+  const showNotes = cand.showNotes !== false;
   const sections = Array.isArray(cand.sections)
     ? cand.sections
         .filter((s) => s && catalog[s.comp]) // 알 수 없는 컴포넌트 제거
-        .map((s) => ({ comp: s.comp, opts: { ...defaultOpts(s.comp), ...(s.opts || {}) } }))
+        .map((s) => ({
+          comp: s.comp,
+          opts: { ...defaultOpts(s.comp), ...(s.opts || {}) },
+          comment: typeof s.comment === "string" ? s.comment : "",
+        }))
     : [];
-  return { lang, device, pageType, sections };
+  return { lang, device, pageType, showNotes, sections };
 }
 
 function applyState(next) {
@@ -65,7 +73,9 @@ function loadTemplate(pageType) {
   state.sections = (templates[pageType] || []).map((s) => ({
     comp: s.comp,
     opts: { ...defaultOpts(s.comp), ...(s.opts || {}) },
+    comment: "",
   }));
+  selIdx = null;
 }
 
 // ---- 라벨 헬퍼 ----
@@ -97,6 +107,9 @@ function renderTopbar() {
     </label>
     <label class="tb-field">${ui().language}
       <select id="selLang">${langOpts}</select>
+    </label>
+    <label class="tb-field">${ui().notesToggle}
+      <button id="btnNotes" class="btn btn-toggle ${state.showNotes ? "is-on" : ""}">${state.showNotes ? "ON" : "OFF"}</button>
     </label>
     <span class="tb-autosave" title="${ui().autosave}">● ${ui().autosave}</span>
     <div class="tb-spacer"></div>
@@ -130,6 +143,13 @@ function renderTopbar() {
   $("#btnSave").addEventListener("click", saveJson);
   $("#btnLoad").addEventListener("click", () => $("#fileLoad").click());
   $("#fileLoad").addEventListener("change", loadJson);
+  $("#btnNotes").addEventListener("click", () => {
+    state.showNotes = !state.showNotes;
+    const b = $("#btnNotes");
+    b.textContent = state.showNotes ? "ON" : "OFF";
+    b.classList.toggle("is-on", state.showNotes);
+    updatePreview();
+  });
 }
 
 // ---- 구성 JSON 저장/불러오기 ----
@@ -185,18 +205,26 @@ function renderPanel() {
     list = state.sections
       .map((s, i) => {
         const opts = renderOptions(s, i);
+        const sel = i === selIdx;
+        const cmt = String(s.comment || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return `
-        <div class="sec" data-i="${i}">
+        <div class="sec${sel ? " is-sel" : ""}" data-i="${i}">
           <div class="sec-head">
+            <span class="drag" title="${ui().dragHint}" draggable="true">⠿</span>
             <span class="sec-idx">${i + 1}</span>
-            <span class="sec-name">${compLabel(s.comp)}</span>
+            <span class="sec-name" data-select="${i}">${compLabel(s.comp)}</span>
             <span class="sec-actions">
+              <button class="ico" data-dup="${i}" title="${ui().duplicate}">⧉</button>
               <button class="ico" data-move="${i}:-1" title="${ui().moveUp}">▲</button>
               <button class="ico" data-move="${i}:1" title="${ui().moveDown}">▼</button>
               <button class="ico ico-del" data-remove="${i}" title="${ui().remove}">✕</button>
             </span>
           </div>
-          ${opts ? `<div class="sec-opts">${opts}</div>` : ""}
+          ${sel ? `<div class="sec-inserthint">${ui().insertHint}</div>` : ""}
+          <div class="sec-body">
+            <textarea class="sec-comment" data-comment="${i}" placeholder="${ui().commentPh}" rows="1">${cmt}</textarea>
+            ${opts ? `<div class="sec-opts">${opts}</div>` : ""}
+          </div>
         </div>`;
       })
       .join("");
@@ -238,20 +266,40 @@ function renderOptions(s, i) {
     .join("");
 }
 
+// 새 섹션 생성
+function newSection(id) {
+  return { comp: id, opts: defaultOpts(id), comment: "" };
+}
+
 // ---- 패널 이벤트 (위임) ----
 function bindPanel() {
   const panel = $("#panel");
   panel.addEventListener("click", (e) => {
     const add = e.target.closest("[data-add]");
+    const dup = e.target.closest("[data-dup]");
     const rem = e.target.closest("[data-remove]");
     const mov = e.target.closest("[data-move]");
+    const selBtn = e.target.closest("[data-select]");
     if (add) {
       const id = add.dataset.add;
-      state.sections.push({ comp: id, opts: defaultOpts(id) });
+      if (selIdx != null && selIdx < state.sections.length) {
+        state.sections.splice(selIdx + 1, 0, newSection(id));
+        selIdx = selIdx + 1; // 방금 삽입한 항목을 다음 삽입 기준으로
+      } else {
+        state.sections.push(newSection(id));
+      }
+      renderPanel();
+      updatePreview();
+    } else if (dup) {
+      const i = +dup.dataset.dup;
+      const src = state.sections[i];
+      state.sections.splice(i + 1, 0, { comp: src.comp, opts: { ...src.opts }, comment: src.comment || "" });
+      selIdx = null;
       renderPanel();
       updatePreview();
     } else if (rem) {
       state.sections.splice(+rem.dataset.remove, 1);
+      selIdx = null;
       renderPanel();
       updatePreview();
     } else if (mov) {
@@ -259,21 +307,66 @@ function bindPanel() {
       const j = i + dir;
       if (j >= 0 && j < state.sections.length) {
         [state.sections[i], state.sections[j]] = [state.sections[j], state.sections[i]];
+        selIdx = null;
         renderPanel();
         updatePreview();
       }
+    } else if (selBtn) {
+      const i = +selBtn.dataset.select;
+      selIdx = selIdx === i ? null : i; // 다시 클릭하면 해제
+      renderPanel();
     }
   });
-  // 옵션 변경 → 프리뷰만 갱신(패널 재렌더 X, 포커스 유지)
+
+  // 옵션/코멘트 변경 → 프리뷰만 갱신(패널 재렌더 X, 포커스 유지)
   panel.addEventListener("input", (e) => {
-    const el = e.target.closest("[data-opt]");
-    if (!el) return;
-    const [i, key] = el.dataset.opt.split(":");
-    let v;
-    if (el.type === "checkbox") v = el.checked;
-    else if (el.type === "number") v = +el.value;
-    else v = el.value;
-    state.sections[+i].opts[key] = v;
+    const opt = e.target.closest("[data-opt]");
+    const cmt = e.target.closest("[data-comment]");
+    if (opt) {
+      const [i, key] = opt.dataset.opt.split(":");
+      let v;
+      if (opt.type === "checkbox") v = opt.checked;
+      else if (opt.type === "number") v = +opt.value;
+      else v = opt.value;
+      state.sections[+i].opts[key] = v;
+      updatePreview();
+    } else if (cmt) {
+      state.sections[+cmt.dataset.comment].comment = cmt.value;
+      updatePreview();
+    }
+  });
+
+  // ---- 드래그 & 드롭 정렬 ----
+  let dragFrom = null;
+  panel.addEventListener("dragstart", (e) => {
+    const sec = e.target.closest(".sec");
+    if (!sec) return;
+    dragFrom = +sec.dataset.i;
+    e.dataTransfer.effectAllowed = "move";
+    sec.classList.add("is-drag");
+  });
+  panel.addEventListener("dragend", (e) => {
+    const sec = e.target.closest(".sec");
+    if (sec) sec.classList.remove("is-drag");
+  });
+  panel.addEventListener("dragover", (e) => {
+    if (dragFrom == null) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const over = e.target.closest(".sec");
+    panel.querySelectorAll(".sec.is-over").forEach((el) => el.classList.remove("is-over"));
+    if (over) over.classList.add("is-over");
+  });
+  panel.addEventListener("drop", (e) => {
+    if (dragFrom == null) return;
+    e.preventDefault();
+    const over = e.target.closest(".sec");
+    const to = over ? +over.dataset.i : state.sections.length - 1;
+    const [moved] = state.sections.splice(dragFrom, 1);
+    state.sections.splice(to, 0, moved);
+    dragFrom = null;
+    selIdx = null;
+    renderPanel();
     updatePreview();
   });
 }

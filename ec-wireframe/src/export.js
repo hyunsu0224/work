@@ -128,14 +128,51 @@ const FOOTER_HTML = `<footer class="wf-footer">
   <span class="wf-cookiebar__btn" onclick="document.getElementById('wfCookie').style.display='none'">同意する</span>
 </div>`;
 
-// state.sections = [{ comp, opts }]  →  <main> 안쪽 문자열
+// 실제 동작하는 슬라이더 런타임(hero 등) — 프리뷰·다운로드 문서 공통
+const SLIDER_SCRIPT = `<script>
+(function(){
+  document.querySelectorAll('.wf-slider').forEach(function(sl){
+    var track=sl.querySelector('.wf-slider__track');
+    var slides=sl.querySelectorAll('.wf-slider__slide');
+    var dots=sl.querySelectorAll('.wf-slider__dots i');
+    var n=slides.length,i=0,timer=null;
+    function go(k){i=(k%n+n)%n;track.style.transform='translateX(-'+(i*100)+'%)';
+      dots.forEach(function(d,j){d.classList.toggle('is-active',j===i);});}
+    var p=sl.querySelector('.wf-slider__arrow--prev'),x=sl.querySelector('.wf-slider__arrow--next');
+    if(p)p.addEventListener('click',function(){go(i-1);});
+    if(x)x.addEventListener('click',function(){go(i+1);});
+    dots.forEach(function(d,j){d.addEventListener('click',function(){go(j);});});
+    function play(){if(sl.dataset.autoplay==='1'&&n>1){timer=setInterval(function(){go(i+1);},(+sl.dataset.interval||4000));}}
+    function stop(){if(timer){clearInterval(timer);timer=null;}}
+    sl.addEventListener('mouseenter',stop);sl.addEventListener('mouseleave',play);
+    go(0);play();
+  });
+})();
+<\/script>`;
+
+// 주석 표시 토글 버튼(다운로드 문서에서도 클라이언트/개발 뷰 전환)
+function annoToggle(showNotes) {
+  const label = showNotes === false ? "注記: OFF" : "注記: ON";
+  return `<button class="wf-anno-toggle" onclick="document.body.classList.toggle('wf-hide-anno');this.textContent=document.body.classList.contains('wf-hide-anno')?'注記: OFF':'注記: ON';">${label}</button>`;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+// state.sections = [{ comp, opts, comment }]  →  <main> 안쪽 문자열
 export function renderSections(sections, lang) {
   const ctx = { lang, notes: strings[lang].note };
   return sections
     .map((s) => {
       const comp = catalog[s.comp];
       if (!comp) return `  <!-- unknown component: ${s.comp} -->`;
-      return comp.render(s.opts || {}, ctx);
+      const html = comp.render(s.opts || {}, ctx);
+      if (s.comment && s.comment.trim()) {
+        const cmt = `  <div class="wf-container" style="padding-top:14px;"><div class="wf-comment">${esc(s.comment.trim())}</div></div>`;
+        return cmt + "\n" + html;
+      }
+      return html;
     })
     .join("\n\n");
 }
@@ -146,6 +183,7 @@ export function buildDocument(state, css) {
   const t = i18n[lang];
   const bar = fmt(t.meta.previewBar, { page: pageType });
   const body = renderSections(sections, lang);
+  const bodyClass = state.showNotes === false ? "wf-hide-anno" : "";
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -157,7 +195,9 @@ export function buildDocument(state, css) {
 ${css}
 </style>
 </head>
-<body>
+<body class="${bodyClass}">
+
+${annoToggle(state.showNotes)}
 
 <div style="background:#111;color:#fff;padding:6px 16px;font-size:12px;text-align:center;">${bar}</div>
 
@@ -170,6 +210,8 @@ ${body}
 </main>
 
 ${FOOTER_HTML}
+
+${SLIDER_SCRIPT}
 
 </body>
 </html>`;

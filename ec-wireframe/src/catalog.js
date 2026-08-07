@@ -15,16 +15,26 @@ function card(o = {}) {
   const badge = o.badge ? `<span class="wf-card__badge">${o.badgeText || "NEW"}</span>` : "";
   const fav = o.fav === false ? "" : `<span class="wf-card__fav">♡</span>`;
   const rank = o.rank ? ` data-rank="${o.rank}"` : "";
+  const cat = o.cat || "カテゴリ";
+  const name = o.name || "商品名テキストが入ります";
+  const priceTxt = o.price || "¥0,000";
   const price = o.sale
-    ? `<div class="wf-card__price wf-card__price--sale"><del>¥0,000</del>30%OFF ¥0,000（税込）</div>`
-    : `<div class="wf-card__price">¥0,000（税込）</div>`;
+    ? `<div class="wf-card__price wf-card__price--sale"><del>${priceTxt}</del>30%OFF ${priceTxt}（税込）</div>`
+    : `<div class="wf-card__price">${priceTxt}（税込）</div>`;
   return `<div class="wf-card">
         <div class="wf-card__thumb"${rank}><div class="wf-box wf-box--img wf-box--sq">商品画像</div>${badge}${fav}</div>
-        <div class="wf-card__cat">カテゴリ</div>
-        <div class="wf-card__name">商品名テキストが入ります</div>
+        <div class="wf-card__cat">${cat}</div>
+        <div class="wf-card__name">${name}</div>
         ${price}
       </div>`;
 }
+
+// 카드 내용 오버라이드 옵션(공통) — 비우면 더미
+const cardContentOpts = [
+  { key: "name", type: "text", default: "", label: "상품명 / 商品名" },
+  { key: "cat", type: "text", default: "", label: "카테고리 / カテゴリ" },
+  { key: "price", type: "text", default: "", label: "가격 / 価格 (예: ¥3,900)" },
+];
 
 function cards(n, o = {}) {
   return Array.from({ length: n }, (_, i) => card({ ...o, rank: o.ranked ? i + 1 : undefined })).join("\n        ");
@@ -45,13 +55,27 @@ export const catalog = {
     options: [
       { key: "slides", type: "number", min: 1, max: 10, default: 5, label: "슬라이드 매수 / 枚数" },
       { key: "autoplay", type: "bool", default: true, label: "자동재생 / 自動再生" },
+      { key: "arrows", type: "bool", default: true, label: "화살표 표시 / 矢印表示" },
       { key: "indicator", type: "bool", default: true, label: "인디케이터 / インジケータ" },
     ],
     render(o, ctx) {
-      return section(
-        `      <div class="wf-box wf-box--img wf-box--hero">HERO SLIDER</div>
-      ${note(ctx, "hero", o)}`
-      );
+      const n = Math.max(1, o.slides || 5);
+      const slides = Array.from(
+        { length: n },
+        (_, i) => `        <div class="wf-slider__slide"><div class="wf-box wf-box--img wf-box--hero">HERO ${i + 1} / ${n}</div></div>`
+      ).join("\n");
+      const arrows = o.arrows && n > 1
+        ? `\n        <button class="wf-slider__arrow wf-slider__arrow--prev" aria-label="prev">‹</button>\n        <button class="wf-slider__arrow wf-slider__arrow--next" aria-label="next">›</button>`
+        : "";
+      const dots = o.indicator && n > 1
+        ? `\n        <div class="wf-slider__dots">${Array.from({ length: n }, () => "<i></i>").join("")}</div>`
+        : "";
+      return section(`      <div class="wf-slider" data-autoplay="${o.autoplay ? 1 : 0}" data-interval="4000">
+        <div class="wf-slider__track">
+${slides}
+        </div>${arrows}${dots}
+      </div>
+      ${note(ctx, "hero", o)}`);
     },
   },
 
@@ -67,10 +91,14 @@ export const catalog = {
   },
 
   "category-grid": {
-    options: [{ key: "cols", type: "number", min: 3, max: 6, default: 5, label: "열수 / 列数" }],
+    options: [
+      { key: "cols", type: "number", min: 3, max: 6, default: 5, label: "열수 / 列数" },
+      { key: "labels", type: "text", default: "", label: "타일 라벨(콤마) / タイルラベル" },
+    ],
     render(o, ctx) {
       const n = o.cols || 5;
-      const tiles = Array.from({ length: n }, () => `<li><a class="wf-box wf-box--img wf-box--sq" href="/shop/c/c{code}/">カテゴリ</a></li>`).join("\n        ");
+      const labels = (o.labels || "").split(",").map((s) => s.trim()).filter(Boolean);
+      const tiles = Array.from({ length: n }, (_, i) => `<li><a class="wf-box wf-box--img wf-box--sq" href="/shop/c/c{code}/">${labels[i] || "カテゴリ"}</a></li>`).join("\n        ");
       return section(`      <h2 class="wf-section__ttl">カテゴリから探す CATEGORY</h2>
       ${note(ctx, "category-grid", o)}
       <ul class="wf-grid wf-grid--${n}" style="margin-top:8px;">
@@ -83,6 +111,7 @@ export const catalog = {
     options: [
       { key: "count", type: "number", min: 3, max: 8, default: 4, label: "표시 개수 / 表示数" },
       { key: "tabs", type: "text", default: "総合,カテゴリA,カテゴリB,カテゴリC", label: "탭(콤마) / タブ" },
+      ...cardContentOpts,
     ],
     render(o, ctx) {
       const tabs = (o.tabs || "総合,カテゴリA,カテゴリB,カテゴリC").split(",").map((t, i) =>
@@ -91,7 +120,7 @@ export const catalog = {
       <div class="wf-rank-tabs">${tabs}</div>
       ${note(ctx, "ranking", o)}
       <div class="wf-carousel" style="margin-top:8px;">
-        ${cards(o.count || 4, { ranked: true, fav: true })}
+        ${cards(o.count || 4, { ranked: true, fav: true, name: o.name, cat: o.cat, price: o.price })}
       </div>`, "wf-rank");
     },
   },
@@ -103,11 +132,13 @@ export const catalog = {
       { key: "badge", type: "bool", default: true, label: "NEW뱃지 / NEWバッジ" },
       { key: "sale", type: "bool", default: false, label: "SALE 표기 / SALE表示" },
       { key: "more", type: "bool", default: true, label: "もっと見る 버튼" },
+      ...cardContentOpts,
     ],
     render(o, ctx) {
       const n = o.count || 4;
+      const cc = { name: o.name, cat: o.cat, price: o.price };
       const list = Array.from({ length: n }, (_, i) =>
-        card({ badge: o.badge && i % 2 === 0, sale: o.sale && i === 1 })
+        card({ ...cc, badge: o.badge && i % 2 === 0, sale: o.sale && i === 1 })
       ).join("\n        ");
       const more = o.more ? `\n      <div class="wf-box wf-more">もっと見る ＞</div>` : "";
       return section(`      <h2 class="wf-section__ttl">${o.title || "おすすめ商品"}</h2>
@@ -154,12 +185,18 @@ export const catalog = {
   },
 
   "page-title": {
-    options: [{ key: "sub", type: "bool", default: true, label: "서브카테고리 칩 / サブカテゴリ" }],
+    options: [
+      { key: "title", type: "text", default: "", label: "카테고리명 / カテゴリ名" },
+      { key: "count", type: "text", default: "", label: "건수 / 件数 (예: 128)" },
+      { key: "sub", type: "bool", default: true, label: "서브카테고리 칩 / サブカテゴリ" },
+    ],
     render(o) {
+      const ttl = o.title || "カテゴリ名";
+      const cnt = o.count || "000";
       const chips = o.sub
         ? `\n      <div class="wf-variant__chips" style="margin-top:10px;"><span class="wf-chip">サブA</span><span class="wf-chip">サブB</span><span class="wf-chip">サブC</span></div>`
         : "";
-      return section(`      <h1 class="wf-section__ttl" style="font-size:20px;">カテゴリ名 <span style="font-size:13px;color:#888;font-weight:normal;">（全 000 件）</span></h1>${chips}`);
+      return section(`      <h1 class="wf-section__ttl" style="font-size:20px;">${ttl} <span style="font-size:13px;color:#888;font-weight:normal;">（全 ${cnt} 件）</span></h1>${chips}`);
     },
   },
 
@@ -179,10 +216,11 @@ export const catalog = {
     options: [
       { key: "cols", type: "number", min: 2, max: 4, default: 4, label: "상품 열수 / 商品列数" },
       { key: "count", type: "number", min: 4, max: 16, default: 8, label: "표시 건수 / 表示件数" },
+      ...cardContentOpts,
     ],
     render(o, ctx) {
       const n = o.cols || 4;
-      const grid = cards(o.count || 8, { badge: false });
+      const grid = cards(o.count || 8, { badge: false, name: o.name, cat: o.cat, price: o.price });
       return section(`      ${note(ctx, "list-body", o)}
       <div class="wf-listlayout" style="margin-top:8px;">
         <aside class="wf-filter">

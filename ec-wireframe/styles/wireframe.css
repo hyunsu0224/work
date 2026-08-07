@@ -221,6 +221,32 @@ img{max-width:100%;display:block;}
   .wf-cartitem{grid-template-columns:72px 1fr;}
 }
 
+/* =========================================================================
+   SLIDER  —  실제 동작하는 슬라이더(hero 등). JS = 문서 하단 슬라이더 스크립트
+   ========================================================================= */
+.wf-slider{position:relative;overflow:hidden;border:1px solid #ccc;}
+.wf-slider__track{display:flex;transition:transform .4s ease;}
+.wf-slider__slide{flex:0 0 100%;}
+.wf-slider__slide .wf-box{border:0;}
+.wf-slider__arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;
+  border:1px solid var(--wf-line);background:#fff;cursor:pointer;font-size:20px;line-height:1;z-index:3;
+  display:flex;align-items:center;justify-content:center;}
+.wf-slider__arrow--prev{left:8px;}
+.wf-slider__arrow--next{right:8px;}
+.wf-slider__dots{position:absolute;left:0;right:0;bottom:10px;display:flex;gap:8px;justify-content:center;z-index:3;}
+.wf-slider__dots i{width:9px;height:9px;border-radius:50%;border:1px solid var(--wf-line);background:#fff;cursor:pointer;}
+.wf-slider__dots i.is-active{background:var(--wf-line);}
+
+/* =========================================================================
+   ANNOTATION  —  주석/코멘트 + 표시 토글
+   ========================================================================= */
+.wf-comment{background:#fffbe6;border:1px solid #e6d27a;border-left:4px solid #d4a017;
+  padding:8px 12px;margin:0 0 12px;font-size:12px;color:#6b5900;border-radius:2px;white-space:pre-wrap;}
+.wf-comment::before{content:"💬 ";}
+.wf-hide-anno .wf-note,.wf-hide-anno .wf-comment{display:none !important;}
+.wf-anno-toggle{position:fixed;top:8px;right:10px;z-index:300;font-size:11px;
+  border:1px solid var(--wf-line);background:#fff;padding:5px 10px;cursor:pointer;border-radius:3px;opacity:.9;}
+
 /* ---- 공통 헬퍼 ---- */
 .wf-more{border:1px solid var(--wf-line);max-width:200px;margin:16px auto 0;min-height:0;padding:10px;text-align:center;}
 .wf-rank-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
