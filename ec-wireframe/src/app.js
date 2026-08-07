@@ -243,6 +243,12 @@ function renderPanel() {
   `;
 }
 
+// {ko,ja} 또는 문자열 라벨을 현재 언어로
+function L(label) {
+  if (label && typeof label === "object") return label[state.lang] || label.ja || label.ko || "";
+  return label || "";
+}
+
 function renderOptions(s, i) {
   const comp = catalog[s.comp];
   if (!comp || !comp.options || comp.options.length === 0) return "";
@@ -250,18 +256,19 @@ function renderOptions(s, i) {
     .map((opt) => {
       const val = s.opts[opt.key];
       const name = `${i}:${opt.key}`;
+      const lbl = L(opt.label);
       if (opt.type === "bool") {
-        return `<label class="opt opt-bool"><input type="checkbox" data-opt="${name}" ${val ? "checked" : ""}> ${opt.label}</label>`;
+        return `<label class="opt opt-bool"><input type="checkbox" data-opt="${name}" ${val ? "checked" : ""}> ${lbl}</label>`;
       }
       if (opt.type === "number") {
-        return `<label class="opt"><span>${opt.label}</span><input type="number" data-opt="${name}" value="${val}" min="${opt.min ?? 0}" max="${opt.max ?? 99}" step="${opt.step ?? 1}"></label>`;
+        return `<label class="opt"><span>${lbl}</span><input type="number" data-opt="${name}" value="${val}" min="${opt.min ?? 0}" max="${opt.max ?? 99}" step="${opt.step ?? 1}"></label>`;
       }
       if (opt.type === "select") {
-        const choices = (opt.choices || []).map(([v, l]) => `<option value="${v}" ${String(v) === String(val) ? "selected" : ""}>${l}</option>`).join("");
-        return `<label class="opt"><span>${opt.label}</span><select data-opt="${name}">${choices}</select></label>`;
+        const choices = (opt.choices || []).map(([v, l]) => `<option value="${v}" ${String(v) === String(val) ? "selected" : ""}>${L(l)}</option>`).join("");
+        return `<label class="opt"><span>${lbl}</span><select data-opt="${name}">${choices}</select></label>`;
       }
       // text
-      return `<label class="opt"><span>${opt.label}</span><input type="text" data-opt="${name}" value="${String(val).replace(/"/g, "&quot;")}"></label>`;
+      return `<label class="opt"><span>${lbl}</span><input type="text" data-opt="${name}" value="${String(val).replace(/"/g, "&quot;")}"></label>`;
     })
     .join("");
 }

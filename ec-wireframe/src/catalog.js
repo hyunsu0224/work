@@ -1,7 +1,8 @@
 // catalog.js — 컴포넌트 사전 (components.md 기반)
 // 각 컴포넌트: { options:[스키마], render(opts, ctx)->html(<section> 포함) }
-// ctx = { lang, notes }  (notes = strings[lang].note)
-// 출력 마크업은 demo/*.html 과 동일한 wf-* 구조. EC 콘텐츠 라벨은 일본어 고정.
+// ctx = { lang, notes }
+// 옵션 label / select choice label 은 {ko, ja} 로 언어별 분리(빌더 UI가 언어 토글 따라감).
+// 출력 마크업의 EC 콘텐츠 라벨은 일본어 고정(일본 EC 사이트 대상).
 
 // ---- 헬퍼 --------------------------------------------------------------
 function note(ctx, key, opts) {
@@ -29,15 +30,19 @@ function card(o = {}) {
       </div>`;
 }
 
-// 카드 내용 오버라이드 옵션(공통) — 비우면 더미
-const cardContentOpts = [
-  { key: "name", type: "text", default: "", label: "상품명 / 商品名" },
-  { key: "cat", type: "text", default: "", label: "카테고리 / カテゴリ" },
-  { key: "price", type: "text", default: "", label: "가격 / 価格 (예: ¥3,900)" },
-];
-
 function cards(n, o = {}) {
   return Array.from({ length: n }, (_, i) => card({ ...o, rank: o.ranked ? i + 1 : undefined })).join("\n        ");
+}
+
+// 상품 캐러셀 — 좌우 화살표로 실제 스크롤(슬라이드)되는 이미지 영역
+function carouselSlider(cardsHtml) {
+  return `<div class="wf-carousel-wrap" style="margin-top:8px;">
+        <button class="wf-carousel__nav wf-carousel__nav--prev" aria-label="prev">‹</button>
+        <div class="wf-carousel">
+        ${cardsHtml}
+        </div>
+        <button class="wf-carousel__nav wf-carousel__nav--next" aria-label="next">›</button>
+      </div>`;
 }
 
 function section(inner, cls = "") {
@@ -48,15 +53,22 @@ ${inner}
   </section>`;
 }
 
+// 카드 내용 오버라이드 옵션(공통) — 비우면 더미
+const cardContentOpts = [
+  { key: "name", type: "text", default: "", label: { ko: "상품명", ja: "商品名" } },
+  { key: "cat", type: "text", default: "", label: { ko: "카테고리", ja: "カテゴリ" } },
+  { key: "price", type: "text", default: "", label: { ko: "가격 (예: ¥3,900)", ja: "価格 (例: ¥3,900)" } },
+];
+
 // 옵션 스키마 타입: number{min,max,step} / bool / select{choices:[[value,label]]} / text
 export const catalog = {
   // ---------------------------------------------------------------- TOP
   hero: {
     options: [
-      { key: "slides", type: "number", min: 1, max: 10, default: 5, label: "슬라이드 매수 / 枚数" },
-      { key: "autoplay", type: "bool", default: true, label: "자동재생 / 自動再生" },
-      { key: "arrows", type: "bool", default: true, label: "화살표 표시 / 矢印表示" },
-      { key: "indicator", type: "bool", default: true, label: "인디케이터 / インジケータ" },
+      { key: "slides", type: "number", min: 1, max: 10, default: 5, label: { ko: "슬라이드 매수", ja: "スライド枚数" } },
+      { key: "autoplay", type: "bool", default: true, label: { ko: "자동재생", ja: "自動再生" } },
+      { key: "arrows", type: "bool", default: true, label: { ko: "화살표 표시", ja: "矢印表示" } },
+      { key: "indicator", type: "bool", default: true, label: { ko: "인디케이터", ja: "インジケータ" } },
     ],
     render(o, ctx) {
       const n = Math.max(1, o.slides || 5);
@@ -80,7 +92,7 @@ ${slides}
   },
 
   promo: {
-    options: [{ key: "cols", type: "number", min: 2, max: 4, default: 2, label: "열수 / 列数" }],
+    options: [{ key: "cols", type: "number", min: 2, max: 4, default: 2, label: { ko: "열 수", ja: "列数" } }],
     render(o) {
       const n = o.cols || 2;
       const tiles = Array.from({ length: n }, () => `<div class="wf-box wf-box--img wf-box--tall">プロモバナー</div>`).join("\n        ");
@@ -92,8 +104,8 @@ ${slides}
 
   "category-grid": {
     options: [
-      { key: "cols", type: "number", min: 3, max: 6, default: 5, label: "열수 / 列数" },
-      { key: "labels", type: "text", default: "", label: "타일 라벨(콤마) / タイルラベル" },
+      { key: "cols", type: "number", min: 3, max: 6, default: 5, label: { ko: "열 수", ja: "列数" } },
+      { key: "labels", type: "text", default: "", label: { ko: "타일 라벨(콤마)", ja: "タイルラベル(カンマ)" } },
     ],
     render(o, ctx) {
       const n = o.cols || 5;
@@ -109,29 +121,40 @@ ${slides}
 
   ranking: {
     options: [
-      { key: "count", type: "number", min: 3, max: 8, default: 4, label: "표시 개수 / 表示数" },
-      { key: "tabs", type: "text", default: "総合,カテゴリA,カテゴリB,カテゴリC", label: "탭(콤마) / タブ" },
+      { key: "count", type: "number", min: 3, max: 8, default: 4, label: { ko: "표시 개수", ja: "表示数" } },
+      { key: "tabs", type: "text", default: "総合,カテゴリA,カテゴリB,カテゴリC", label: { ko: "탭(콤마 구분)", ja: "タブ(カンマ区切り)" } },
       ...cardContentOpts,
     ],
     render(o, ctx) {
-      const tabs = (o.tabs || "総合,カテゴリA,カテゴリB,カテゴリC").split(",").map((t, i) =>
-        `<span${i === 0 ? ' class="is-active"' : ""}>${t.trim()}</span>`).join("");
+      const tabsArr = (o.tabs || "総合,カテゴリA,カテゴリB,カテゴリC").split(",").map((s) => s.trim()).filter(Boolean);
+      const count = o.count || 4;
+      const head = tabsArr.map((t, i) => `<button class="wf-tab${i === 0 ? " is-active" : ""}" data-tab="${i}">${t}</button>`).join("");
+      const panels = tabsArr
+        .map((t, i) => {
+          const cardsHtml = cards(count, { ranked: true, fav: true, name: o.name, cat: o.cat || t, price: o.price });
+          return `        <div class="wf-tabpanel${i === 0 ? " is-active" : ""}" data-panel="${i}">
+          ${carouselSlider(cardsHtml)}
+        </div>`;
+        })
+        .join("\n");
       return section(`      <h2 class="wf-section__ttl">ランキング RANKING</h2>
-      <div class="wf-rank-tabs">${tabs}</div>
-      ${note(ctx, "ranking", o)}
-      <div class="wf-carousel" style="margin-top:8px;">
-        ${cards(o.count || 4, { ranked: true, fav: true, name: o.name, cat: o.cat, price: o.price })}
+      <div class="wf-tabs">
+        <div class="wf-tabs__head">${head}</div>
+        ${note(ctx, "ranking", o)}
+        <div class="wf-tabs__body">
+${panels}
+        </div>
       </div>`, "wf-rank");
     },
   },
 
   carousel: {
     options: [
-      { key: "title", type: "text", default: "おすすめ商品", label: "제목 / タイトル" },
-      { key: "count", type: "number", min: 2, max: 8, default: 4, label: "표시 개수 / 表示数" },
-      { key: "badge", type: "bool", default: true, label: "NEW뱃지 / NEWバッジ" },
-      { key: "sale", type: "bool", default: false, label: "SALE 표기 / SALE表示" },
-      { key: "more", type: "bool", default: true, label: "もっと見る 버튼" },
+      { key: "title", type: "text", default: "おすすめ商品", label: { ko: "제목", ja: "タイトル" } },
+      { key: "count", type: "number", min: 2, max: 8, default: 4, label: { ko: "표시 개수", ja: "表示数" } },
+      { key: "badge", type: "bool", default: true, label: { ko: "NEW 뱃지", ja: "NEWバッジ" } },
+      { key: "sale", type: "bool", default: false, label: { ko: "SALE 표기", ja: "SALE表示" } },
+      { key: "more", type: "bool", default: true, label: { ko: "더보기 버튼", ja: "もっと見るボタン" } },
       ...cardContentOpts,
     ],
     render(o, ctx) {
@@ -143,14 +166,12 @@ ${slides}
       const more = o.more ? `\n      <div class="wf-box wf-more">もっと見る ＞</div>` : "";
       return section(`      <h2 class="wf-section__ttl">${o.title || "おすすめ商品"}</h2>
       ${note(ctx, "carousel", o)}
-      <div class="wf-carousel" style="margin-top:8px;">
-        ${list}
-      </div>${more}`);
+      ${carouselSlider(list)}${more}`);
     },
   },
 
   topics: {
-    options: [{ key: "cols", type: "number", min: 2, max: 4, default: 4, label: "열수 / 列数" }],
+    options: [{ key: "cols", type: "number", min: 2, max: 4, default: 4, label: { ko: "열 수", ja: "列数" } }],
     render(o, ctx) {
       const n = o.cols || 4;
       const tiles = Array.from({ length: n }, () => `<li><a class="wf-box wf-box--img wf-box--tall" href="/shop/e/e{code}/">特集バナー</a></li>`).join("\n        ");
@@ -163,7 +184,7 @@ ${slides}
   },
 
   info: {
-    options: [{ key: "rows", type: "number", min: 1, max: 8, default: 3, label: "행수 / 行数" }],
+    options: [{ key: "rows", type: "number", min: 1, max: 8, default: 3, label: { ko: "행 수", ja: "行数" } }],
     render(o) {
       const rows = Array.from({ length: o.rows || 3 }, () =>
         `<li class="wf-flex" style="border-bottom:1px dashed #ccc;padding:10px 0;"><span class="wf-card__cat" style="flex:0 0 90px;">2026.00.00</span><span>お知らせタイトルが入ります</span></li>`
@@ -186,9 +207,9 @@ ${slides}
 
   "page-title": {
     options: [
-      { key: "title", type: "text", default: "", label: "카테고리명 / カテゴリ名" },
-      { key: "count", type: "text", default: "", label: "건수 / 件数 (예: 128)" },
-      { key: "sub", type: "bool", default: true, label: "서브카테고리 칩 / サブカテゴリ" },
+      { key: "title", type: "text", default: "", label: { ko: "카테고리명", ja: "カテゴリ名" } },
+      { key: "count", type: "text", default: "", label: { ko: "건수 (예: 128)", ja: "件数 (例: 128)" } },
+      { key: "sub", type: "bool", default: true, label: { ko: "서브카테고리 칩", ja: "サブカテゴリチップ" } },
     ],
     render(o) {
       const ttl = o.title || "カテゴリ名";
@@ -201,7 +222,7 @@ ${slides}
   },
 
   sortbar: {
-    options: [{ key: "viewToggle", type: "bool", default: true, label: "뷰전환 / 表示切替" }],
+    options: [{ key: "viewToggle", type: "bool", default: true, label: { ko: "뷰 전환", ja: "表示切替" } }],
     render(o, ctx) {
       const view = o.viewToggle ? `<span class="wf-chip">▦</span><span class="wf-chip">▤</span>` : "";
       return section(`      <div class="wf-sortbar">
@@ -214,8 +235,8 @@ ${slides}
 
   "list-body": {
     options: [
-      { key: "cols", type: "number", min: 2, max: 4, default: 4, label: "상품 열수 / 商品列数" },
-      { key: "count", type: "number", min: 4, max: 16, default: 8, label: "표시 건수 / 表示件数" },
+      { key: "cols", type: "number", min: 2, max: 4, default: 4, label: { ko: "상품 열 수", ja: "商品列数" } },
+      { key: "count", type: "number", min: 4, max: 16, default: 8, label: { ko: "표시 건수", ja: "表示件数" } },
       ...cardContentOpts,
     ],
     render(o, ctx) {
@@ -237,7 +258,10 @@ ${slides}
   },
 
   pagination: {
-    options: [{ key: "type", type: "select", default: "number", choices: [["number", "번호형 / 番号"], ["more", "もっと見る"]], label: "타입 / タイプ" }],
+    options: [{
+      key: "type", type: "select", default: "number", label: { ko: "타입", ja: "タイプ" },
+      choices: [["number", { ko: "번호형", ja: "番号型" }], ["more", { ko: "더보기(무한로드)", ja: "もっと見る" }]],
+    }],
     render(o, ctx) {
       if (o.type === "more") {
         return section(`      <div class="wf-box wf-more">もっと見る ＞</div>
@@ -251,11 +275,17 @@ ${slides}
   // ---------------------------------------------------------------- DETAIL
   "detail-main": {
     options: [
-      { key: "variant", type: "text", default: "サイズ·色", label: "variant 축 / 軸" },
-      { key: "stickyCta", type: "bool", default: true, label: "SP 하단고정 cta" },
-      { key: "instant", type: "bool", default: true, label: "즉시구매 / 今すぐ購入" },
+      { key: "variant", type: "text", default: "サイズ·色", label: { ko: "variant 축", ja: "バリアント軸" } },
+      { key: "gallery", type: "number", min: 2, max: 8, default: 4, label: { ko: "갤러리 매수", ja: "ギャラリー枚数" } },
+      { key: "stickyCta", type: "bool", default: true, label: { ko: "SP 하단고정 CTA", ja: "SP下部固定CTA" } },
+      { key: "instant", type: "bool", default: true, label: { ko: "즉시구매", ja: "今すぐ購入" } },
     ],
     render(o, ctx) {
+      const gN = Math.max(2, o.gallery || 4);
+      const thumbs = Array.from(
+        { length: gN },
+        (_, i) => `<div class="wf-box wf-box--img${i === 0 ? " is-active" : ""}" data-idx="${i}">${i + 1}</div>`
+      ).join("");
       const chips = `<span class="wf-chip">S</span><span class="wf-chip">M</span><span class="wf-chip">L</span>`;
       const sub = o.instant
         ? `<div class="wf-cta wf-cta--sub">今すぐ購入</div><div class="wf-cta wf-cta--sub">♡ お気に入り</div>`
@@ -263,10 +293,13 @@ ${slides}
       return section(`      ${note(ctx, "detail-main", o)}
       <div class="wf-detail" style="margin-top:8px;">
         <div>
-          <div class="wf-box wf-box--img wf-gallery__main" style="min-height:360px;">商品メイン画像</div>
-          <div class="wf-gallery__thumbs">
-            <div class="wf-box wf-box--img">1</div><div class="wf-box wf-box--img">2</div>
-            <div class="wf-box wf-box--img">3</div><div class="wf-box wf-box--img">4</div>
+          <div class="wf-gallery" data-count="${gN}">
+            <div class="wf-gallery__stage">
+              <button class="wf-gallery__nav wf-gallery__nav--prev" aria-label="prev">‹</button>
+              <div class="wf-box wf-box--img wf-gallery__main" style="min-height:360px;">商品画像 <span class="wf-gallery__idx">1</span> / ${gN}</div>
+              <button class="wf-gallery__nav wf-gallery__nav--next" aria-label="next">›</button>
+            </div>
+            <div class="wf-gallery__thumbs">${thumbs}</div>
           </div>
         </div>
         <div>
@@ -295,7 +328,7 @@ ${slides}
   },
 
   review: {
-    options: [{ key: "count", type: "number", min: 1, max: 6, default: 3, label: "리뷰 표시수 / 表示数" }],
+    options: [{ key: "count", type: "number", min: 1, max: 6, default: 3, label: { ko: "리뷰 표시수", ja: "表示数" } }],
     render(o, ctx) {
       const rows = Array.from({ length: o.count || 3 }, () =>
         `<li style="border-bottom:1px dashed #ccc;padding:12px 0;"><b>★★★★☆</b> レビュータイトル<br><span style="color:#888;font-size:12px;">レビュー本文が入ります…</span></li>`
@@ -309,13 +342,11 @@ ${slides}
   },
 
   related: {
-    options: [{ key: "count", type: "number", min: 2, max: 8, default: 4, label: "표시 개수 / 表示数" }],
+    options: [{ key: "count", type: "number", min: 2, max: 8, default: 4, label: { ko: "표시 개수", ja: "表示数" } }],
     render(o, ctx) {
       return section(`      <h2 class="wf-section__ttl">この商品を見た人はこちらも RELATED</h2>
       ${note(ctx, "related", o)}
-      <div class="wf-carousel" style="margin-top:8px;">
-        ${cards(o.count || 4, {})}
-      </div>`);
+      ${carouselSlider(cards(o.count || 4, {}))}`);
     },
   },
 
@@ -329,7 +360,7 @@ ${slides}
   },
 
   "cart-items": {
-    options: [{ key: "count", type: "number", min: 1, max: 6, default: 2, label: "아이템 수 / 件数" }],
+    options: [{ key: "count", type: "number", min: 1, max: 6, default: 2, label: { ko: "아이템 수", ja: "件数" } }],
     render(o) {
       const rows = Array.from({ length: o.count || 2 }, () =>
         `<div class="wf-cartitem">
@@ -344,7 +375,7 @@ ${slides}
   },
 
   "cart-summary": {
-    options: [{ key: "coupon", type: "bool", default: true, label: "쿠폰·포인트 / クーポン" }],
+    options: [{ key: "coupon", type: "bool", default: true, label: { ko: "쿠폰·포인트", ja: "クーポン·ポイント" } }],
     render(o) {
       const coupon = o.coupon ? `<div class="wf-summary__row"><span>クーポン / ポイント</span><span>入力 ▾</span></div>` : "";
       return section(`      <div style="max-width:420px;margin-left:auto;">
@@ -371,7 +402,7 @@ ${slides}
   },
 
   "mypage-menu": {
-    options: [{ key: "cols", type: "number", min: 2, max: 4, default: 3, label: "열수 / 列数" }],
+    options: [{ key: "cols", type: "number", min: 2, max: 4, default: 3, label: { ko: "열 수", ja: "列数" } }],
     render(o, ctx) {
       const items = ["注文履歴", "お気に入り", "会員情報", "住所帳", "クーポン", "ポイント履歴"];
       const tiles = items.map((t) => `<li><a class="wf-box" href="#" style="min-height:80px;flex-direction:column;">${t}</a></li>`).join("\n        ");
@@ -385,7 +416,10 @@ ${slides}
 
   // ---------------------------------------------------------------- LP / 자유
   "free-banner": {
-    options: [{ key: "height", type: "select", default: "hero", choices: [["hero", "특대 / 特大"], ["tall", "큰 / 大"], ["", "보통 / 中"]], label: "높이 / 高さ" }],
+    options: [{
+      key: "height", type: "select", default: "hero", label: { ko: "높이", ja: "高さ" },
+      choices: [["hero", { ko: "특대", ja: "特大" }], ["tall", { ko: "큰", ja: "大" }], ["", { ko: "보통", ja: "中" }]],
+    }],
     render(o) {
       const h = o.height === "" ? "" : ` wf-box--${o.height || "hero"}`;
       return section(`      <div class="wf-box wf-box--img${h}">フリーバナー / メインビジュアル</div>`);
@@ -393,7 +427,7 @@ ${slides}
   },
 
   "free-text": {
-    options: [{ key: "heading", type: "text", default: "セクション見出し", label: "제목 / 見出し" }],
+    options: [{ key: "heading", type: "text", default: "セクション見出し", label: { ko: "제목", ja: "見出し" } }],
     render(o) {
       return section(`      <h2 class="wf-section__ttl">${o.heading || "セクション見出し"}</h2>
       <div class="wf-box" style="min-height:80px;justify-content:flex-start;padding:12px;">自由テキスト・説明文が入ります。</div>`);

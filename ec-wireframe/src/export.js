@@ -150,6 +150,42 @@ const SLIDER_SCRIPT = `<script>
 })();
 <\/script>`;
 
+// 캐러셀 화살표 / 탭 전환 / 갤러리 — 실제 동작 인터랙션(프리뷰·다운로드 공통)
+const INTERACTION_SCRIPT = `<script>
+(function(){
+  // 상품 캐러셀: 좌우 화살표로 스크롤
+  document.querySelectorAll('.wf-carousel-wrap').forEach(function(w){
+    var c=w.querySelector('.wf-carousel');if(!c)return;
+    var p=w.querySelector('.wf-carousel__nav--prev'),x=w.querySelector('.wf-carousel__nav--next');
+    function step(){return Math.max(c.clientWidth*0.8,220);}
+    if(p)p.addEventListener('click',function(){c.scrollBy({left:-step(),behavior:'smooth'});});
+    if(x)x.addEventListener('click',function(){c.scrollBy({left:step(),behavior:'smooth'});});
+  });
+  // 탭: 클릭 시 패널 전환
+  document.querySelectorAll('.wf-tabs').forEach(function(tabs){
+    var btns=tabs.querySelectorAll('.wf-tab');
+    var panels=tabs.querySelectorAll('.wf-tabpanel');
+    btns.forEach(function(b){b.addEventListener('click',function(){
+      btns.forEach(function(y){y.classList.toggle('is-active',y===b);});
+      panels.forEach(function(pn){pn.classList.toggle('is-active',pn.dataset.panel===b.dataset.tab);});
+    });});
+  });
+  // 상세 갤러리: 썸네일/화살표로 메인 이미지 인덱스 전환
+  document.querySelectorAll('.wf-gallery').forEach(function(g){
+    var idxEl=g.querySelector('.wf-gallery__idx');
+    var thumbs=g.querySelectorAll('.wf-gallery__thumbs .wf-box');
+    var n=thumbs.length,cur=0;if(!n)return;
+    function set(k){cur=(k%n+n)%n;if(idxEl)idxEl.textContent=(cur+1);
+      thumbs.forEach(function(t,j){t.classList.toggle('is-active',j===cur);});}
+    thumbs.forEach(function(t,j){t.addEventListener('click',function(){set(j);});});
+    var p=g.querySelector('.wf-gallery__nav--prev'),x=g.querySelector('.wf-gallery__nav--next');
+    if(p)p.addEventListener('click',function(){set(cur-1);});
+    if(x)x.addEventListener('click',function(){set(cur+1);});
+    set(0);
+  });
+})();
+<\/script>`;
+
 // 주석 표시 토글 버튼(다운로드 문서에서도 클라이언트/개발 뷰 전환)
 function annoToggle(showNotes) {
   const label = showNotes === false ? "注記: OFF" : "注記: ON";
@@ -212,6 +248,8 @@ ${body}
 ${FOOTER_HTML}
 
 ${SLIDER_SCRIPT}
+
+${INTERACTION_SCRIPT}
 
 </body>
 </html>`;

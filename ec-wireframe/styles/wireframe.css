@@ -237,6 +237,32 @@ img{max-width:100%;display:block;}
 .wf-slider__dots i{width:9px;height:9px;border-radius:50%;border:1px solid var(--wf-line);background:#fff;cursor:pointer;}
 .wf-slider__dots i.is-active{background:var(--wf-line);}
 
+/* ---- 상품 캐러셀: 좌우 화살표로 스크롤(슬라이드) ---- */
+.wf-carousel-wrap{position:relative;}
+.wf-carousel__nav{position:absolute;top:calc(50% - 14px);transform:translateY(-50%);
+  width:34px;height:34px;border:1px solid var(--wf-line);background:#fff;cursor:pointer;
+  font-size:18px;line-height:1;z-index:3;display:flex;align-items:center;justify-content:center;}
+.wf-carousel__nav--prev{left:-8px;}
+.wf-carousel__nav--next{right:-8px;}
+
+/* ---- 탭: 클릭 시 패널 전환(실제 동작) ---- */
+.wf-tabs__head{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.wf-tab{border:1px solid var(--wf-line);background:#fff;padding:6px 14px;font-size:12px;cursor:pointer;}
+.wf-tab.is-active{background:var(--wf-line);color:#fff;}
+.wf-tabpanel{display:none;}
+.wf-tabpanel.is-active{display:block;}
+
+/* ---- 갤러리(상세): 썸네일/화살표로 메인 이미지 전환 ---- */
+.wf-gallery__stage{position:relative;}
+.wf-gallery__nav{position:absolute;top:50%;transform:translateY(-50%);
+  width:36px;height:36px;border:1px solid var(--wf-line);background:#fff;cursor:pointer;
+  font-size:18px;line-height:1;z-index:3;display:flex;align-items:center;justify-content:center;}
+.wf-gallery__nav--prev{left:8px;}
+.wf-gallery__nav--next{right:8px;}
+.wf-gallery__thumbs{margin-top:12px;}
+.wf-gallery__thumbs .wf-box{cursor:pointer;}
+.wf-gallery__thumbs .wf-box.is-active{outline:2px solid var(--wf-line);outline-offset:1px;}
+
 /* =========================================================================
    ANNOTATION  —  주석/코멘트 + 표시 토글
    ========================================================================= */
