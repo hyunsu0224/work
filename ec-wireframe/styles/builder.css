@@ -16,6 +16,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .tb-title{font-weight:700;font-size:15px;margin-right:8px;}
 .tb-field{display:flex;flex-direction:column;font-size:11px;color:var(--muted);gap:3px;}
 .tb-field select{font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);}
+.tb-autosave{font-size:11px;color:#2e9e5b;display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .tb-spacer{flex:1;}
 .btn{border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;background:#fff;color:var(--ink);}
 .btn-ghost:hover{background:var(--chip);}

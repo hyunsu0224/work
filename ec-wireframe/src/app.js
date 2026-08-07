@@ -15,6 +15,50 @@ let CSS = ""; // wireframe.css 원문
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
+// ======================================================================
+//  영속화 (localStorage 자동저장 + JSON 저장/불러오기)
+// ======================================================================
+const STORAGE_KEY = "ec-wf-state-v1";
+
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (_) {
+    /* 용량초과·프라이빗모드 등은 조용히 무시 */
+  }
+}
+
+// 외부에서 들어온 state 후보를 검증·정제(신뢰 못 할 데이터 방어)
+function sanitize(cand) {
+  if (!cand || typeof cand !== "object") return null;
+  const lang = ["ko", "ja"].includes(cand.lang) ? cand.lang : "ko";
+  const device = ["both", "pc", "sp"].includes(cand.device) ? cand.device : "both";
+  const pageType = PAGE_TYPES.includes(cand.pageType) ? cand.pageType : "top";
+  const sections = Array.isArray(cand.sections)
+    ? cand.sections
+        .filter((s) => s && catalog[s.comp]) // 알 수 없는 컴포넌트 제거
+        .map((s) => ({ comp: s.comp, opts: { ...defaultOpts(s.comp), ...(s.opts || {}) } }))
+    : [];
+  return { lang, device, pageType, sections };
+}
+
+function applyState(next) {
+  Object.assign(state, next);
+}
+
+function restore() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const clean = sanitize(JSON.parse(raw));
+    if (!clean) return false;
+    applyState(clean);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 // ---- 상태 초기화 ----
 function loadTemplate(pageType) {
   state.pageType = pageType;
@@ -54,9 +98,13 @@ function renderTopbar() {
     <label class="tb-field">${ui().language}
       <select id="selLang">${langOpts}</select>
     </label>
+    <span class="tb-autosave" title="${ui().autosave}">● ${ui().autosave}</span>
     <div class="tb-spacer"></div>
+    <button id="btnSave" class="btn btn-ghost">${ui().save}</button>
+    <button id="btnLoad" class="btn btn-ghost">${ui().load}</button>
     <button id="btnReset" class="btn btn-ghost">${ui().reset}</button>
     <button id="btnDownload" class="btn btn-primary">${ui().download}</button>
+    <input id="fileLoad" type="file" accept="application/json,.json" hidden>
   `;
 
   $("#selPage").addEventListener("change", (e) => {
@@ -79,6 +127,44 @@ function renderTopbar() {
     }
   });
   $("#btnDownload").addEventListener("click", download);
+  $("#btnSave").addEventListener("click", saveJson);
+  $("#btnLoad").addEventListener("click", () => $("#fileLoad").click());
+  $("#fileLoad").addEventListener("change", loadJson);
+}
+
+// ---- 구성 JSON 저장/불러오기 ----
+function saveJson() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${state.pageType}-wireframe.wf.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function loadJson(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ""; // 같은 파일 재선택 허용
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const clean = sanitize(safeParse(reader.result));
+    if (!clean) return alert(ui().loadFailed);
+    applyState(clean);
+    renderAll();
+  };
+  reader.readAsText(file);
+}
+
+function safeParse(txt) {
+  try {
+    return JSON.parse(txt);
+  } catch (_) {
+    return null;
+  }
 }
 
 // ======================================================================
@@ -196,6 +282,7 @@ function bindPanel() {
 //  프리뷰 & 다운로드
 // ======================================================================
 function updatePreview() {
+  persist(); // 모든 변경이 여기로 수렴 → 자동저장 단일 지점
   const html = buildDocument(state, CSS);
   const iframe = $("#preview");
   iframe.srcdoc = html;
@@ -224,7 +311,7 @@ function renderAll() {
 
 async function init() {
   CSS = await fetch("./styles/wireframe.css").then((r) => r.text());
-  loadTemplate("top");
+  if (!restore()) loadTemplate("top"); // 저장된 구성 있으면 복원, 없으면 기본 템플릿
   bindPanel();
   renderAll();
 }
