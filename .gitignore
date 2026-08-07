@@ -1,0 +1,27 @@
+# OS / 시스템 파일
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# 에디터 / IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# 임시 / 백업 파일
+*.tmp
+*.bak
+*.log
+~$*
+*.swp
+
+# 압축 / 설치 파일 (실수로 커밋되는 것 방지)
+*.zip
+*.7z
+*.exe
+*.msi
+
+# node
+node_modules/
