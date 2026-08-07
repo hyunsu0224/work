@@ -24,6 +24,8 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .btn-primary:hover{filter:brightness(1.06);}
 .btn-toggle{padding:5px 12px;font-weight:600;color:var(--muted);}
 .btn-toggle.is-on{background:#e8f3ec;color:#2e9e5b;border-color:#b7ddc5;}
+.btn-ico{padding:6px 10px;font-size:15px;line-height:1;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
 
 /* ---- 본문 2컬럼 ---- */
 .main{display:grid;grid-template-columns:320px 1fr;min-height:0;}

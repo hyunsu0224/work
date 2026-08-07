@@ -54,6 +54,64 @@ function applyState(next) {
   Object.assign(state, next);
 }
 
+// ======================================================================
+//  히스토리 (undo / redo) — 내용(pageType·sections) 스냅샷 스택
+//  ※ 언어·표시대상·주석표시 같은 화면설정은 되돌리기 대상 아님(내용만)
+// ======================================================================
+const HIST_MAX = 100;
+let history = [];
+let hp = -1; // 현재 스냅샷 포인터
+let histTimer = null; // 연속 입력(타이핑) 코얼레싱
+
+function snapshot() {
+  return JSON.parse(JSON.stringify({ pageType: state.pageType, sections: state.sections }));
+}
+function histInit() {
+  history = [snapshot()];
+  hp = 0;
+  updateHistButtons();
+}
+function histPush() {
+  clearTimeout(histTimer);
+  const snap = snapshot();
+  if (hp >= 0 && JSON.stringify(history[hp]) === JSON.stringify(snap)) return; // 변화 없음 → skip
+  history = history.slice(0, hp + 1); // redo 가지 잘라냄
+  history.push(snap);
+  if (history.length > HIST_MAX) history.shift();
+  hp = history.length - 1;
+  updateHistButtons();
+}
+function histPushDebounced() {
+  clearTimeout(histTimer);
+  histTimer = setTimeout(histPush, 500); // 타이핑이 멈추면 1개 항목으로 묶임
+}
+function loadSnapshot(snap) {
+  state.pageType = snap.pageType;
+  state.sections = JSON.parse(JSON.stringify(snap.sections));
+  selIdx = null;
+  renderAll(); // 현재 언어·표시대상은 그대로 유지
+}
+function undo() {
+  clearTimeout(histTimer);
+  if (hp > 0) {
+    hp--;
+    loadSnapshot(history[hp]);
+  }
+}
+function redo() {
+  clearTimeout(histTimer);
+  if (hp < history.length - 1) {
+    hp++;
+    loadSnapshot(history[hp]);
+  }
+}
+function updateHistButtons() {
+  const u = $("#btnUndo");
+  const r = $("#btnRedo");
+  if (u) u.disabled = hp <= 0;
+  if (r) r.disabled = hp >= history.length - 1;
+}
+
 function restore() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -113,6 +171,8 @@ function renderTopbar() {
     </label>
     <span class="tb-autosave" title="${ui().autosave}">● ${ui().autosave}</span>
     <div class="tb-spacer"></div>
+    <button id="btnUndo" class="btn btn-ico" title="${ui().undo} (Ctrl+Z)">↶</button>
+    <button id="btnRedo" class="btn btn-ico" title="${ui().redo} (Ctrl+Shift+Z)">↷</button>
     <button id="btnSave" class="btn btn-ghost">${ui().save}</button>
     <button id="btnLoad" class="btn btn-ghost">${ui().load}</button>
     <button id="btnReset" class="btn btn-ghost">${ui().reset}</button>
@@ -123,6 +183,7 @@ function renderTopbar() {
   $("#selPage").addEventListener("change", (e) => {
     loadTemplate(e.target.value);
     renderAll();
+    histPush();
   });
   $("#selDevice").addEventListener("change", (e) => {
     state.device = e.target.value;
@@ -137,8 +198,11 @@ function renderTopbar() {
     if (confirm(ui().confirmReset)) {
       loadTemplate(state.pageType);
       renderAll();
+      histPush();
     }
   });
+  $("#btnUndo").addEventListener("click", undo);
+  $("#btnRedo").addEventListener("click", redo);
   $("#btnDownload").addEventListener("click", download);
   $("#btnSave").addEventListener("click", saveJson);
   $("#btnLoad").addEventListener("click", () => $("#fileLoad").click());
@@ -175,6 +239,7 @@ function loadJson(e) {
     if (!clean) return alert(ui().loadFailed);
     applyState(clean);
     renderAll();
+    histPush();
   };
   reader.readAsText(file);
 }
@@ -297,6 +362,7 @@ function bindPanel() {
       }
       renderPanel();
       updatePreview();
+      histPush();
     } else if (dup) {
       const i = +dup.dataset.dup;
       const src = state.sections[i];
@@ -304,11 +370,13 @@ function bindPanel() {
       selIdx = null;
       renderPanel();
       updatePreview();
+      histPush();
     } else if (rem) {
       state.sections.splice(+rem.dataset.remove, 1);
       selIdx = null;
       renderPanel();
       updatePreview();
+      histPush();
     } else if (mov) {
       const [i, dir] = mov.dataset.move.split(":").map(Number);
       const j = i + dir;
@@ -317,6 +385,7 @@ function bindPanel() {
         selIdx = null;
         renderPanel();
         updatePreview();
+        histPush();
       }
     } else if (selBtn) {
       const i = +selBtn.dataset.select;
@@ -337,9 +406,11 @@ function bindPanel() {
       else v = opt.value;
       state.sections[+i].opts[key] = v;
       updatePreview();
+      histPushDebounced();
     } else if (cmt) {
       state.sections[+cmt.dataset.comment].comment = cmt.value;
       updatePreview();
+      histPushDebounced();
     }
   });
 
@@ -375,6 +446,7 @@ function bindPanel() {
     selIdx = null;
     renderPanel();
     updatePreview();
+    histPush();
   });
 }
 
@@ -407,12 +479,32 @@ function renderAll() {
   renderPanel();
   $("#stage").className = "stage dev-" + state.device;
   updatePreview();
+  updateHistButtons(); // 툴바 재생성 후 undo/redo 활성 상태 반영
+}
+
+// 키보드 단축키: Ctrl+Z=되돌리기, Ctrl+Shift+Z / Ctrl+Y=다시실행
+function bindShortcuts() {
+  document.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    const inText = /^(input|textarea|select)$/i.test(e.target.tagName || "");
+    if (inText) return; // 텍스트 입력 중엔 브라우저 기본 undo 유지
+    const k = e.key.toLowerCase();
+    if (k === "z" && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    } else if ((k === "z" && e.shiftKey) || k === "y") {
+      e.preventDefault();
+      redo();
+    }
+  });
 }
 
 async function init() {
   CSS = await fetch("./styles/wireframe.css").then((r) => r.text());
   if (!restore()) loadTemplate("top"); // 저장된 구성 있으면 복원, 없으면 기본 템플릿
   bindPanel();
+  bindShortcuts();
+  histInit(); // 현재 상태를 히스토리 0번으로
   renderAll();
 }
 
