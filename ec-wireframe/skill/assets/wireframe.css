@@ -1,0 +1,207 @@
+/* =========================================================================
+   wireframe.css  —  로우파이 와이어프레임 공통 스타일
+   - 목적: 색/이미지 없는 "회색 박스" 골격으로 구조·배치만 검증
+   - 대응: PC(>=768px) / SP(<768px) 단일 CSS로 분기
+   - 규칙: 실제 색상·폰트·이미지는 넣지 않는다. 흑백 그레이스케일만.
+   ========================================================================= */
+
+:root{
+  --wf-line:#333;          /* 테두리 */
+  --wf-box:#e8e8e8;        /* 플레이스홀더 박스 면 */
+  --wf-box-2:#d8d8d8;      /* 강조 박스 면 */
+  --wf-ink:#333;           /* 텍스트/라벨 */
+  --wf-muted:#888;         /* 보조 라벨 */
+  --wf-bg:#fff;
+  --wf-note:#555;          /* 주석(회색박스 위 설명) */
+  --wf-gap:16px;
+  --wf-radius:2px;
+  --wf-bp:768px;           /* 브레이크포인트: 여기 미만이 SP */
+  --wf-maxw:1200px;        /* ecbeing PC 기본 폭(meta-viewport width=1200 기준) */
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--wf-bg); color:var(--wf-ink);
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,-apple-system,sans-serif;
+  font-size:14px; line-height:1.5;
+}
+a{color:inherit;text-decoration:none;}
+ul{list-style:none;margin:0;padding:0;}
+img{max-width:100%;display:block;}
+
+/* ---- 레이아웃 컨테이너 ---- */
+.wf-container{max-width:var(--wf-maxw);margin:0 auto;padding:0 var(--wf-gap);}
+.wf-section{padding:32px 0;border-bottom:1px dashed #ccc;}
+.wf-section__ttl{
+  font-size:16px;font-weight:bold;margin:0 0 16px;
+  padding-left:10px;border-left:4px solid var(--wf-line);
+}
+
+/* ---- 플레이스홀더 박스: 모든 "이미지/미정 콘텐츠"는 이걸로 ---- */
+.wf-box{
+  background:var(--wf-box);
+  border:1px solid var(--wf-line);
+  border-radius:var(--wf-radius);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--wf-muted);font-size:12px;text-align:center;
+  min-height:60px;padding:8px;
+  position:relative;
+}
+/* 대각선(이미지 자리 표시 관례) */
+.wf-box--img{
+  background:
+    linear-gradient(45deg,transparent 49%,#bbb 49%,#bbb 51%,transparent 51%),
+    linear-gradient(-45deg,transparent 49%,#bbb 49%,#bbb 51%,transparent 51%),
+    var(--wf-box);
+  background-size:100% 100%;
+}
+.wf-box--tall{min-height:200px;}
+.wf-box--hero{min-height:320px;}
+.wf-box--sq{aspect-ratio:1/1;min-height:0;}
+
+/* ---- 주석 라벨: 요소의 동작/옵션을 회색박스 위에 명시 ---- */
+.wf-note{
+  display:inline-block;font-size:11px;color:var(--wf-note);
+  border:1px dashed #999;border-radius:2px;padding:1px 6px;margin:4px 0;background:#fafafa;
+}
+.wf-note::before{content:"⌖ ";}
+
+/* ---- 그리드 유틸 ---- */
+.wf-grid{display:grid;gap:var(--wf-gap);}
+.wf-grid--2{grid-template-columns:repeat(2,1fr);}
+.wf-grid--3{grid-template-columns:repeat(3,1fr);}
+.wf-grid--4{grid-template-columns:repeat(4,1fr);}
+.wf-grid--5{grid-template-columns:repeat(5,1fr);}
+.wf-grid--6{grid-template-columns:repeat(6,1fr);}
+.wf-flex{display:flex;gap:var(--wf-gap);align-items:center;}
+
+/* =========================================================================
+   HEADER  —  ecbeing 공통 헤더 골격
+   ========================================================================= */
+.wf-header{border-bottom:2px solid var(--wf-line);position:sticky;top:0;background:#fff;z-index:100;}
+.wf-header__utility{border-bottom:1px solid #ddd;font-size:12px;}
+.wf-header__utility .wf-container{display:flex;justify-content:flex-end;gap:16px;padding-top:6px;padding-bottom:6px;}
+.wf-header__main{display:flex;align-items:center;gap:24px;padding:12px 0;}
+.wf-logo{width:160px;height:40px;flex:0 0 auto;}
+.wf-gnav{flex:1;}
+.wf-gnav > ul{display:flex;gap:20px;flex-wrap:wrap;}
+.wf-gnav__item{position:relative;padding:8px 0;cursor:pointer;font-weight:bold;}
+.wf-gnav__item::after{content:" ▾";color:var(--wf-muted);font-weight:normal;}
+.wf-actions{display:flex;gap:14px;align-items:center;flex:0 0 auto;}
+.wf-action{width:32px;height:32px;border:1px solid var(--wf-line);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:11px;position:relative;}
+.wf-badge{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;
+  background:var(--wf-line);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+
+/* ---- 메가메뉴(PC hover 시 아코디언 펼침) ---- */
+.wf-mega{
+  display:none;position:absolute;left:0;top:100%;width:640px;
+  background:#fff;border:1px solid var(--wf-line);padding:16px;z-index:120;
+  box-shadow:0 6px 16px rgba(0,0,0,.12);
+}
+.wf-gnav__item:hover .wf-mega{display:block;}   /* PC: hover 전개 */
+.wf-mega__close{display:none;}                   /* PC에선 close 불필요 */
+
+/* ---- 햄버거(SP 전용) ---- */
+.wf-hamburger{display:none;width:40px;height:40px;border:1px solid var(--wf-line);
+  flex-direction:column;gap:5px;align-items:center;justify-content:center;cursor:pointer;}
+.wf-hamburger span{display:block;width:22px;height:2px;background:var(--wf-line);}
+
+/* ---- SP 드로어(옆에서 슬라이드 인) ---- */
+.wf-drawer{
+  position:fixed;top:0;left:-84%;width:84%;height:100vh;background:#fff;
+  border-right:2px solid var(--wf-line);z-index:200;overflow-y:auto;
+  transition:left .28s ease;padding:16px;
+}
+.wf-drawer.is-open{left:0;}
+.wf-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:190;display:none;}
+.wf-overlay.is-open{display:block;}
+.wf-drawer__acc > .wf-drawer__head{
+  border:1px solid var(--wf-line);padding:12px;margin-bottom:8px;
+  display:flex;justify-content:space-between;cursor:pointer;font-weight:bold;
+}
+.wf-drawer__head::after{content:"＋";}
+.wf-drawer__acc.is-open .wf-drawer__head::after{content:"－";}
+.wf-drawer__panel{display:none;padding:4px 0 12px 12px;}
+.wf-drawer__acc.is-open .wf-drawer__panel{display:block;}
+.wf-drawer__panel li{padding:8px 0;border-bottom:1px dashed #ccc;}
+
+/* =========================================================================
+   PRODUCT CARD  —  상품 카드(캐러셀/그리드 공통)
+   ========================================================================= */
+.wf-card{border:1px solid #ccc;padding:8px;}
+.wf-card__thumb{position:relative;margin-bottom:8px;}
+.wf-card__badge{position:absolute;top:6px;left:6px;font-size:10px;border:1px solid var(--wf-line);
+  background:#fff;padding:1px 5px;}
+.wf-card__fav{position:absolute;top:6px;right:6px;width:24px;height:24px;border:1px solid var(--wf-line);
+  border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.wf-card__cat{font-size:11px;color:var(--wf-muted);}
+.wf-card__name{font-size:13px;margin:2px 0;min-height:2.6em;}
+.wf-card__price{font-weight:bold;}
+.wf-card__price--sale{color:#333;}
+.wf-card__price del{color:var(--wf-muted);font-weight:normal;margin-right:6px;}
+
+/* ---- 캐러셀(가로 스크롤 표현) ---- */
+.wf-carousel{display:flex;gap:var(--wf-gap);overflow-x:auto;padding-bottom:8px;}
+.wf-carousel > .wf-card{flex:0 0 200px;}
+
+/* =========================================================================
+   BREADCRUMB / PAGINATION / FILTER
+   ========================================================================= */
+.wf-breadcrumb{font-size:12px;color:var(--wf-muted);padding:10px 0;}
+.wf-breadcrumb span::after{content:" ＞ ";}
+.wf-breadcrumb span:last-child::after{content:"";}
+
+.wf-pagination{display:flex;gap:6px;justify-content:center;padding:24px 0;}
+.wf-pagination span{border:1px solid var(--wf-line);min-width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;}
+.wf-pagination .is-current{background:var(--wf-line);color:#fff;}
+
+.wf-filter{border:1px solid #ccc;padding:12px;}
+.wf-filter__group{border-bottom:1px dashed #ccc;padding:10px 0;}
+.wf-sortbar{display:flex;justify-content:space-between;align-items:center;
+  border:1px solid #ccc;padding:8px 12px;margin-bottom:16px;}
+
+/* =========================================================================
+   DETAIL  —  상품상세 전용
+   ========================================================================= */
+.wf-detail{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+.wf-gallery__main{margin-bottom:12px;}
+.wf-gallery__thumbs{display:flex;gap:8px;}
+.wf-gallery__thumbs .wf-box{width:64px;height:64px;min-height:0;}
+.wf-variant{border:1px solid #ccc;padding:10px;margin:10px 0;}
+.wf-variant__chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.wf-chip{border:1px solid var(--wf-line);padding:6px 12px;font-size:12px;}
+.wf-cta{border:2px solid var(--wf-line);text-align:center;padding:16px;font-weight:bold;margin:8px 0;}
+.wf-cta--sub{border-width:1px;font-weight:normal;}
+
+/* =========================================================================
+   FOOTER
+   ========================================================================= */
+.wf-footer{border-top:2px solid var(--wf-line);margin-top:40px;padding:24px 0;}
+.wf-footer__cols{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-bottom:24px;}
+.wf-footer__col li{padding:6px 0;border-bottom:1px dashed #ddd;font-size:12px;}
+.wf-footer__legal{font-size:11px;color:var(--wf-muted);display:flex;gap:16px;flex-wrap:wrap;}
+.wf-copyright{font-size:11px;color:var(--wf-muted);text-align:center;padding-top:16px;}
+
+/* =========================================================================
+   COOKIE BAR
+   ========================================================================= */
+.wf-cookiebar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--wf-line);
+  padding:12px 16px;display:flex;gap:16px;align-items:center;justify-content:center;z-index:150;font-size:12px;}
+.wf-cookiebar__btn{border:1px solid var(--wf-line);padding:6px 20px;}
+
+/* =========================================================================
+   RESPONSIVE  —  SP(<768px) 분기
+   ========================================================================= */
+@media (max-width:767px){
+  .wf-hamburger{display:flex;}
+  .wf-gnav,.wf-header__utility{display:none;}   /* PC 글로벌내비/유틸 숨김 → 드로어로 이동 */
+  .wf-header__main{gap:12px;justify-content:space-between;}
+  .wf-logo{width:120px;height:32px;}
+  .wf-grid--3,.wf-grid--4,.wf-grid--5,.wf-grid--6{grid-template-columns:repeat(2,1fr);}
+  .wf-footer__cols{grid-template-columns:1fr 1fr;}
+  .wf-detail{grid-template-columns:1fr;}          /* 상세: 1단 세로 스택 */
+  .wf-box--hero{min-height:180px;}
+  .wf-sortbar{flex-direction:column;gap:8px;align-items:stretch;}
+}

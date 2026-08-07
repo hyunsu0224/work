@@ -1,0 +1,125 @@
+<!-- =========================================================================
+     base-header.html  —  ecbeing 공통 헤더 (그대로 재사용)
+     구조: [유틸내비] [로고 | 글로벌내비(메가메뉴) | 회원액션] + [SP 드로어]
+     동작: PC=글로벌내비 hover 시 메가메뉴 아코디언 전개
+           SP =햄버거 클릭 시 좌측 드로어 슬라이드 인 + 항목 아코디언
+     맵핑: class명은 로우파이용(wf-*). 실장 시 company-rules.md의
+           ecbeing 실제 class(예: block_globalnav_category)로 치환.
+     ========================================================================= -->
+<header class="wf-header">
+  <!-- 유틸리티 내비 (PC 전용, SP는 드로어로 이동) -->
+  <div class="wf-header__utility">
+    <div class="wf-container">
+      <a href="#">ご利用ガイド</a>
+      <a href="#">よくある質問</a>
+      <a href="#">お問い合わせ</a>
+      <a href="#">新規会員登録</a>
+      <a href="#">ログイン</a>
+    </div>
+  </div>
+
+  <!-- メイン -->
+  <div class="wf-container wf-header__main">
+    <!-- 햄버거(SP 전용) -->
+    <div class="wf-hamburger" id="wfHamburger" aria-label="menu">
+      <span></span><span></span><span></span>
+    </div>
+
+    <!-- 로고 -->
+    <a href="#" class="wf-box wf-box--img wf-logo">LOGO</a>
+
+    <!-- 글로벌 내비 (PC) -->
+    <nav class="wf-gnav">
+      <ul>
+        <li class="wf-gnav__item">CATEGORY
+          <span class="wf-note">hover→메가메뉴 전개 / SP→드로어 아코디언</span>
+          <div class="wf-mega">
+            <ul class="wf-grid wf-grid--3">
+              <li class="wf-box">大カテゴリA</li>
+              <li class="wf-box">大カテゴリB</li>
+              <li class="wf-box">大カテゴリC</li>
+              <li class="wf-box">中カテゴリ…</li>
+              <li class="wf-box">中カテゴリ…</li>
+              <li class="wf-box">中カテゴリ…</li>
+            </ul>
+          </div>
+        </li>
+        <li class="wf-gnav__item">BRAND
+          <div class="wf-mega">
+            <ul class="wf-grid wf-grid--4">
+              <li class="wf-box wf-box--img">brand</li>
+              <li class="wf-box wf-box--img">brand</li>
+              <li class="wf-box wf-box--img">brand</li>
+              <li class="wf-box wf-box--img">brand</li>
+            </ul>
+          </div>
+        </li>
+        <li class="wf-gnav__item">TOPICS
+          <div class="wf-mega">
+            <ul class="wf-grid wf-grid--2">
+              <li class="wf-box">特集リンク</li>
+              <li class="wf-box">特集リンク</li>
+            </ul>
+          </div>
+        </li>
+        <li class="wf-gnav__item" style="font-weight:normal;">SHOP LIST</li>
+      </ul>
+    </nav>
+
+    <!-- 회원 액션 -->
+    <div class="wf-actions">
+      <a href="#" class="wf-action">検索</a>
+      <a href="#" class="wf-action">♡</a>
+      <a href="#" class="wf-action">👤</a>
+      <a href="#" class="wf-action">🛒<span class="wf-badge">0</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- SP 드로어 + 오버레이 -->
+<div class="wf-overlay" id="wfOverlay"></div>
+<aside class="wf-drawer" id="wfDrawer">
+  <div style="text-align:right;margin-bottom:12px;">
+    <span id="wfDrawerClose" style="border:1px solid #333;padding:4px 10px;cursor:pointer;">✕ close</span>
+  </div>
+  <div class="wf-drawer__acc">
+    <div class="wf-drawer__head">CATEGORY</div>
+    <ul class="wf-drawer__panel">
+      <li>大カテゴリA</li><li>大カテゴリB</li><li>大カテゴリC</li>
+    </ul>
+  </div>
+  <div class="wf-drawer__acc">
+    <div class="wf-drawer__head">BRAND</div>
+    <ul class="wf-drawer__panel"><li>brand 一覧</li></ul>
+  </div>
+  <div class="wf-drawer__acc">
+    <div class="wf-drawer__head">TOPICS</div>
+    <ul class="wf-drawer__panel"><li>特集 一覧</li></ul>
+  </div>
+  <ul style="margin-top:16px;border-top:2px solid #333;padding-top:12px;">
+    <li style="padding:10px 0;">ログイン / 新規会員登録</li>
+    <li style="padding:10px 0;">マイページ</li>
+    <li style="padding:10px 0;">ご利用ガイド</li>
+  </ul>
+</aside>
+
+<script>
+/* 드로어 개폐 */
+(function(){
+  var h=document.getElementById('wfHamburger'),
+      d=document.getElementById('wfDrawer'),
+      o=document.getElementById('wfOverlay'),
+      c=document.getElementById('wfDrawerClose');
+  function open(){d.classList.add('is-open');o.classList.add('is-open');}
+  function close(){d.classList.remove('is-open');o.classList.remove('is-open');}
+  if(h)h.addEventListener('click',open);
+  if(o)o.addEventListener('click',close);
+  if(c)c.addEventListener('click',close);
+  /* 드로어 내부 아코디언 */
+  document.querySelectorAll('.wf-drawer__head').forEach(function(head){
+    head.addEventListener('click',function(){
+      head.parentElement.classList.toggle('is-open');
+    });
+  });
+})();
+</script>
