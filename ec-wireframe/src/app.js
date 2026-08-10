@@ -15,6 +15,7 @@ const state = {
 
 let selIdx = null; // 삽입 기준으로 선택된 섹션 index (null=맨 뒤 추가)
 let panelCollapsed = false; // 편집 패널 접힘 여부(PC/SP 공통)
+const REPO_URL = "https://github.com/hyunsu0224/work"; // 요청(이슈) 대상 저장소
 
 let CSS = ""; // wireframe.css 원문
 
@@ -194,6 +195,7 @@ function renderTopbar() {
     </label>
     <span class="tb-autosave" title="${ui().autosave}">● ${ui().autosave}</span>
     <div class="tb-spacer"></div>
+    <button id="btnRequest" class="btn btn-ghost" title="GitHub Issue">${ui().request}</button>
     <button id="btnUndo" class="btn btn-ico" title="${ui().undo} (Ctrl+Z)">↶</button>
     <button id="btnRedo" class="btn btn-ico" title="${ui().redo} (Ctrl+Shift+Z)">↷</button>
     <button id="btnSave" class="btn btn-ghost">${ui().save}</button>
@@ -230,6 +232,9 @@ function renderTopbar() {
     panelCollapsed = !panelCollapsed;
     saveUI();
     applyCollapsed();
+  });
+  $("#btnRequest").addEventListener("click", () => {
+    window.open(REPO_URL + "/issues/new?template=component-request.yml", "_blank");
   });
   $("#btnUndo").addEventListener("click", undo);
   $("#btnRedo").addEventListener("click", redo);

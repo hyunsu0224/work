@@ -1,0 +1,58 @@
+name: コンポーネント要望 / 컴포넌트 요청
+description: ワイヤーフレームビルダーに追加・改善してほしいコンポーネントや機能 / 추가·개선했으면 하는 컴포넌트·기능
+title: "[要望] "
+labels: ["component-request"]
+body:
+  - type: markdown
+    attributes:
+      value: "ご利用ありがとうございます。追加・改善してほしい内容を教えてください。／ 이용해 주셔서 감사합니다. 추가·개선 요청을 남겨 주세요."
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 種類 / 종류
+      options:
+        - 新規コンポーネント / 새 컴포넌트
+        - 既存の改善 / 기존 개선
+        - 不具合 / 버그
+        - その他 / 기타
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: 名称 / 이름
+      placeholder: "例) 比較表・カウントダウン・動画ブロック / 예) 비교표·카운트다운·동영상"
+  - type: textarea
+    id: desc
+    attributes:
+      label: 説明 / 설명
+      description: どんな要素で、どう動いてほしいか / 어떤 요소이고 어떻게 동작하면 좋을지
+      placeholder: "画像は右、左にタイトルと説明、右下に詳細ボタン… のように具体的に"
+    validations:
+      required: true
+  - type: input
+    id: ref
+    attributes:
+      label: 参考URL・画像 / 참고 URL·이미지
+      placeholder: 参考サイトやスクリーンショットのリンク / 참고 사이트·스크린샷 링크
+  - type: dropdown
+    id: page
+    attributes:
+      label: 対象ページ / 대상 페이지
+      multiple: true
+      options:
+        - top
+        - list (商品一覧)
+        - detail (商品詳細)
+        - cart
+        - mypage
+        - lp / 特集
+        - 共通 / 공통
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度 / 우선순위
+      options:
+        - 高 / 높음
+        - 中 / 보통
+        - 低 / 낮음
