@@ -49,11 +49,11 @@ const bodyInner = indexHtml
   .replace(/<script[^>]*src=["']?\.\/src\/app\.js["']?[^>]*><\/script>/i, "");
 
 const payload = `<!DOCTYPE html>
-<html lang="ko">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EC 와이어프레임 빌더</title>
+<title>EC ワイヤーフレーム ビルダー</title>
 <style>
 ${builderCss}
 </style>
