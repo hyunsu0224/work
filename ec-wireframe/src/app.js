@@ -3,6 +3,7 @@ import { catalog, defaultOpts } from "./catalog.js";
 import { templates, palette, PAGE_TYPES } from "./templates.js";
 import { i18n, strings } from "./i18n.js";
 import { buildDocument } from "./export.js";
+import { iconFor } from "./icons.js";
 
 const state = {
   lang: "ko",
@@ -259,7 +260,7 @@ function renderPanel() {
   // 팔레트
   const pal = (palette[state.pageType] || Object.keys(catalog))
     .filter((id, i, arr) => arr.indexOf(id) === i)
-    .map((id) => `<button class="chip" data-add="${id}">＋ ${compLabel(id)}</button>`)
+    .map((id) => `<button class="chip" data-add="${id}"><span class="cicon-wrap">${iconFor(id)}</span><span class="chip-lbl">${compLabel(id)}</span></button>`)
     .join("");
 
   // 섹션 리스트
@@ -277,6 +278,7 @@ function renderPanel() {
           <div class="sec-head">
             <span class="drag" title="${ui().dragHint}" draggable="true">⠿</span>
             <span class="sec-idx">${i + 1}</span>
+            <span class="cicon-wrap sec-icon">${iconFor(s.comp)}</span>
             <span class="sec-name" data-select="${i}">${compLabel(s.comp)}</span>
             <span class="sec-actions">
               <button class="ico" data-dup="${i}" title="${ui().duplicate}">⧉</button>

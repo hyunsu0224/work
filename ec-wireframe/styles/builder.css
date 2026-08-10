@@ -33,9 +33,17 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .pan-block{margin-bottom:22px;}
 .pan-block h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px;}
 
-.palette{display:flex;flex-wrap:wrap;gap:6px;}
-.chip{border:1px dashed var(--line);background:var(--chip);border-radius:14px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink);}
-.chip:hover{border-color:var(--accent);color:var(--accent);}
+.palette{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.chip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:5px 8px;font-size:12px;cursor:pointer;color:var(--ink);text-align:left;min-width:0;}
+.chip:hover{border-color:var(--accent);color:var(--accent);background:#f6f9fd;}
+.chip-lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* 미니 도식 아이콘 */
+.cicon-wrap{flex:0 0 auto;display:inline-flex;background:#fff;border:1px solid #e2e5ea;border-radius:4px;padding:1px;}
+.cicon{width:28px;height:20px;display:block;}
+.chip:hover .cicon-wrap{border-color:#cfe0f2;}
+.sec-icon{transform:scale(.9);transform-origin:center;}
 
 .fixed-note{font-size:11px;color:var(--muted);background:#f8f9fb;border:1px dashed var(--line);
   border-radius:6px;padding:6px 8px;margin:0 0 10px;}

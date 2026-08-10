@@ -60,6 +60,7 @@ styles/
   wireframe.css     출력물(와이어프레임) 스타일 — 단일 소스, export 시 인라인
 src/
   app.js            UI 컨트롤러(상태·프리뷰·다운로드)
+  icons.js          컴포넌트별 미니 도식 아이콘(인라인 SVG) — 팔레트·섹션 목록용
   catalog.js        컴포넌트 사전(render 함수) — demo 마크업과 동일 출력
   templates.js      페이지 유형별 표준 섹션 구성
   export.js         상태 → 자기완결 HTML 조립(공통 헤더/푸터/스크립트)
