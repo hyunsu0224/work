@@ -11,7 +11,18 @@ node server.js
 
 포트 변경: `node server.js 3000`
 
-## 비밀번호 잠금 (Basic 인증)
+## 공개 페이지 (GitHub Pages, 암호화 잠금)
+정적 호스팅이라 서버 인증은 못 걸지만, **페이지 자체를 AES-GCM으로 암호화**해서 비번 없이는 열리지 않게 배포합니다.
+- URL: **https://hyunsu0224.github.io/work/** — 접속 시 비밀번호 입력 → 복호화되어 빌더가 열림.
+- 비번 입력 전엔 소스가 **암호문**만 노출(문서에는 salt/iv/암호문만, 비번 자체는 없음).
+- 빌드/재배포:
+  ```bash
+  cd ec-wireframe && node build-static.mjs   # .wf-pass 또는 WF_PASSWORD 로 비번 지정
+  cd .. && git add docs && git commit -m "chore: rebuild public page" && git push
+  ```
+- 주의: ① 저장소가 public이면 `src/` 원본도 GitHub에서 그대로 읽힘(공개 페이지 잠금과 별개). 코드까지 숨기려면 저장소를 private로. ② 암호문은 내려받아 오프라인 무차별 대입이 가능하니 **공개 배포용 비번은 길고 강하게** 권장.
+
+## 비밀번호 잠금 (로컬 서버 Basic 인증)
 서버가 **인증을 통과하기 전엔 어떤 파일(HTML·JS·CSS)도 전송하지 않습니다.** 첫 접속 시 브라우저 기본 로그인창이 뜨고, 통과해야 페이지·소스가 로드됩니다. (사용자명은 아무거나, 비밀번호만 확인)
 
 - 비밀번호 우선순위: 환경변수 `WF_PASSWORD` > 폴더 내 `.wf-pass` 파일 > 기본값(`wireframe`)
