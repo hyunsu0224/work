@@ -11,6 +11,15 @@ node server.js
 
 포트 변경: `node server.js 3000`
 
+## 비밀번호 잠금 (Basic 인증)
+서버가 **인증을 통과하기 전엔 어떤 파일(HTML·JS·CSS)도 전송하지 않습니다.** 첫 접속 시 브라우저 기본 로그인창이 뜨고, 통과해야 페이지·소스가 로드됩니다. (사용자명은 아무거나, 비밀번호만 확인)
+
+- 비밀번호 우선순위: 환경변수 `WF_PASSWORD` > 폴더 내 `.wf-pass` 파일 > 기본값(`wireframe`)
+- **비밀번호 바꾸기**: `.wf-pass` 파일 내용을 원하는 값으로 저장(이 파일은 `.gitignore`로 커밋 안 됨). 예시는 `.wf-pass.example` 참고.
+  - 또는 실행 시: `$env:WF_PASSWORD="원하는비번"; node server.js 8000`
+- 인증 끄기: `$env:WF_NOAUTH="1"; node server.js`
+- ⚠️ Basic 인증은 로컬(localhost) 사용 전제입니다. 외부 네트워크에 노출하려면 HTTPS가 필요합니다.
+
 ## 사용법
 1. 상단에서 **페이지 유형**(top/list/detail/cart/mypage/lp) 선택 → 표준 템플릿이 깔림
 2. 왼쪽 **컴포넌트** 칩으로 섹션 추가, ⧉복제 · ▲▼ · ✕삭제, **⠿ 드래그로 순서 변경**

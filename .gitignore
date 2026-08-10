@@ -25,3 +25,6 @@ $RECYCLE.BIN/
 
 # node
 node_modules/
+
+# 비밀번호 파일(실제 비번은 커밋 금지)
+.wf-pass
