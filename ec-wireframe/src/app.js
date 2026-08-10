@@ -14,6 +14,7 @@ const state = {
 };
 
 let selIdx = null; // 삽입 기준으로 선택된 섹션 index (null=맨 뒤 추가)
+let panelCollapsed = false; // 편집 패널 접힘 여부(PC/SP 공통)
 
 let CSS = ""; // wireframe.css 원문
 
@@ -126,6 +127,26 @@ function restore() {
   }
 }
 
+// ---- UI 상태(패널 접힘) 영속화 ----
+const UI_KEY = "ec-wf-ui";
+function loadUI() {
+  try {
+    const u = JSON.parse(localStorage.getItem(UI_KEY) || "{}");
+    panelCollapsed = !!u.collapsed;
+  } catch (_) {}
+}
+function saveUI() {
+  try {
+    localStorage.setItem(UI_KEY, JSON.stringify({ collapsed: panelCollapsed }));
+  } catch (_) {}
+}
+function applyCollapsed() {
+  const app = document.querySelector(".app");
+  if (app) app.classList.toggle("is-collapsed", panelCollapsed);
+  const b = $("#btnPanel");
+  if (b) b.textContent = (panelCollapsed ? "☰ " : "◀ ") + ui().panel;
+}
+
 // ---- 상태 초기화 ----
 function loadTemplate(pageType) {
   state.pageType = pageType;
@@ -157,6 +178,7 @@ function renderTopbar() {
   ).join("");
 
   $("#topbar").innerHTML = `
+    <button id="btnPanel" class="btn btn-ico" title="${ui().panel}">◀ ${ui().panel}</button>
     <div class="tb-title">${ui().appTitle}</div>
     <label class="tb-field">${ui().pageType}
       <select id="selPage">${pageOpts}</select>
@@ -201,6 +223,11 @@ function renderTopbar() {
       renderAll();
       histPush();
     }
+  });
+  $("#btnPanel").addEventListener("click", () => {
+    panelCollapsed = !panelCollapsed;
+    saveUI();
+    applyCollapsed();
   });
   $("#btnUndo").addEventListener("click", undo);
   $("#btnRedo").addEventListener("click", redo);
@@ -482,6 +509,7 @@ function renderAll() {
   $("#stage").className = "stage dev-" + state.device;
   updatePreview();
   updateHistButtons(); // 툴바 재생성 후 undo/redo 활성 상태 반영
+  applyCollapsed(); // 툴바 재생성 후 패널 접힘 상태 반영
 }
 
 // 키보드 단축키: Ctrl+Z=되돌리기, Ctrl+Shift+Z / Ctrl+Y=다시실행
@@ -504,6 +532,7 @@ function bindShortcuts() {
 async function init() {
   CSS = await fetch("./styles/wireframe.css").then((r) => r.text());
   if (!restore()) loadTemplate("top"); // 저장된 구성 있으면 복원, 없으면 기본 템플릿
+  loadUI(); // 패널 접힘 상태 복원
   bindPanel();
   bindShortcuts();
   histInit(); // 현재 상태를 히스토리 0번으로

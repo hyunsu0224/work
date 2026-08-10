@@ -29,6 +29,10 @@ body{margin:0;background:var(--bg);color:var(--ink);
 
 /* ---- 본문 2컬럼 ---- */
 .main{display:grid;grid-template-columns:320px 1fr;min-height:0;}
+
+/* 편집 패널 접힘(PC/SP 공통): 패널 숨기고 프리뷰가 전체 차지 */
+.app.is-collapsed .main{grid-template-columns:1fr;}
+.app.is-collapsed #panel{display:none;}
 #panel{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:14px;}
 .pan-block{margin-bottom:22px;}
 .pan-block h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px;}
