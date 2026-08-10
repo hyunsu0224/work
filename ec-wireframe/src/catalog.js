@@ -433,6 +433,117 @@ ${panels}
       <div class="wf-box" style="min-height:80px;justify-content:flex-start;padding:12px;">自由テキスト・説明文が入ります。</div>`);
     },
   },
+
+  // ---------------------------------------------------------------- LP 리치 컴포넌트
+  // 미디어+텍스트: 한쪽 이미지(단일/슬라이드) ↔ 반대쪽 타이틀·설명·CTA(우하단). 좌우 교차 + 스크롤 애니메이션.
+  "media-text": {
+    options: [
+      {
+        key: "imageSide", type: "select", default: "right", label: { ko: "이미지 위치", ja: "画像位置" },
+        choices: [["right", { ko: "오른쪽", ja: "右" }], ["left", { ko: "왼쪽", ja: "左" }]],
+      },
+      { key: "title", type: "text", default: "セクションタイトル", label: { ko: "타이틀", ja: "タイトル" } },
+      { key: "desc", type: "text", default: "特長やベネフィットの説明テキストが入ります。", label: { ko: "설명", ja: "説明文" } },
+      { key: "cta", type: "text", default: "詳しく見る", label: { ko: "버튼 라벨", ja: "ボタンラベル" } },
+      { key: "slides", type: "number", min: 1, max: 6, default: 1, label: { ko: "이미지 슬라이드 매수", ja: "画像スライド枚数" } },
+      {
+        key: "anim", type: "select", default: "fade", label: { ko: "애니메이션", ja: "アニメーション" },
+        choices: [["none", { ko: "없음", ja: "なし" }], ["fade", { ko: "페이드인", ja: "フェードイン" }], ["slide", { ko: "슬라이드업", ja: "スライドアップ" }]],
+      },
+    ],
+    render(o, ctx) {
+      const side = o.imageSide === "left" ? "left" : "right";
+      const n = Math.max(1, o.slides || 1);
+      let media;
+      if (n > 1) {
+        const sl = Array.from({ length: n }, (_, i) => `          <div class="wf-slider__slide"><div class="wf-box wf-box--img wf-box--tall">画像 ${i + 1} / ${n}</div></div>`).join("\n");
+        media = `<div class="wf-slider" data-autoplay="1" data-interval="4000">
+          <div class="wf-slider__track">
+${sl}
+          </div>
+          <button class="wf-slider__arrow wf-slider__arrow--prev" aria-label="prev">‹</button>
+          <button class="wf-slider__arrow wf-slider__arrow--next" aria-label="next">›</button>
+          <div class="wf-slider__dots">${Array.from({ length: n }, () => "<i></i>").join("")}</div>
+        </div>`;
+      } else {
+        media = `<div class="wf-box wf-box--img wf-box--tall" style="min-height:260px;">画像</div>`;
+      }
+      const anim = o.anim === "fade" ? " wf-reveal wf-reveal--fade" : o.anim === "slide" ? " wf-reveal wf-reveal--slide" : "";
+      return section(`      ${note(ctx, "media-text", o)}
+      <div class="wf-mediatext wf-mediatext--img${side}${anim}">
+        <div class="wf-mediatext__media">${media}</div>
+        <div class="wf-mediatext__body">
+          <h2 class="wf-mediatext__ttl">${o.title || "セクションタイトル"}</h2>
+          <p class="wf-mediatext__desc">${o.desc || ""}</p>
+          <div class="wf-mediatext__cta"><a class="wf-btn" href="/shop/e/e{code}/">${o.cta || "詳しく見る"} ＞</a></div>
+        </div>
+      </div>`);
+    },
+  },
+
+  "feature-cols": {
+    options: [
+      { key: "cols", type: "number", min: 2, max: 4, default: 3, label: { ko: "열 수", ja: "列数" } },
+      { key: "title", type: "text", default: "選ばれる3つの理由", label: { ko: "타이틀", ja: "タイトル" } },
+    ],
+    render(o) {
+      const n = o.cols || 3;
+      const cols = Array.from({ length: n }, (_, i) => `<li class="wf-feature"><div class="wf-box wf-box--img wf-box--sq" style="width:64px;margin:0 auto 12px;">${i + 1}</div><b>ポイント${i + 1}</b><p style="color:#666;font-size:12px;margin:6px 0 0;">特長の説明テキストが入ります。</p></li>`).join("\n        ");
+      return section(`      <h2 class="wf-section__ttl" style="text-align:center;border:0;padding-left:0;">${o.title || "選ばれる理由"}</h2>
+      <ul class="wf-grid wf-grid--${n}" style="margin-top:16px;text-align:center;">
+        ${cols}
+      </ul>`);
+    },
+  },
+
+  "cta-band": {
+    options: [
+      { key: "headline", type: "text", default: "今すぐチェック", label: { ko: "헤드라인", ja: "見出し" } },
+      { key: "cta", type: "text", default: "購入はこちら", label: { ko: "버튼 라벨", ja: "ボタンラベル" } },
+    ],
+    render(o) {
+      return section(`      <div class="wf-ctaband">
+        <div class="wf-ctaband__h">${o.headline || "今すぐチェック"}</div>
+        <a class="wf-btn wf-btn--lg" href="/shop/e/e{code}/">${o.cta || "購入はこちら"} ＞</a>
+      </div>`);
+    },
+  },
+
+  faq: {
+    options: [{ key: "count", type: "number", min: 2, max: 8, default: 4, label: { ko: "질문 수", ja: "質問数" } }],
+    render(o, ctx) {
+      const items = Array.from({ length: o.count || 4 }, () => `<div class="wf-faq__item"><div class="wf-faq__q">質問テキストが入りますか？</div><div class="wf-faq__a">回答テキストが入ります。詳しい説明を記載します。</div></div>`).join("\n        ");
+      return section(`      <h2 class="wf-section__ttl">よくある質問 FAQ</h2>
+      ${note(ctx, "faq", o)}
+      <div class="wf-faq" style="margin-top:8px;">
+        ${items}
+      </div>`);
+    },
+  },
+
+  steps: {
+    options: [{ key: "count", type: "number", min: 2, max: 6, default: 3, label: { ko: "스텝 수", ja: "ステップ数" } }],
+    render(o) {
+      const n = o.count || 3;
+      const items = Array.from({ length: n }, (_, i) => `<li class="wf-flowstep"><div class="wf-flowstep__no">STEP ${i + 1}</div><div class="wf-box wf-box--img wf-box--sq" style="margin:8px 0;">図</div><b>ステップ${i + 1}</b><p style="color:#666;font-size:12px;margin:4px 0 0;">手順の説明。</p></li>`).join("\n        ");
+      return section(`      <h2 class="wf-section__ttl">ご利用の流れ STEP</h2>
+      <ul class="wf-grid wf-grid--${n}" style="margin-top:16px;">
+        ${items}
+      </ul>`);
+    },
+  },
+
+  voice: {
+    options: [{ key: "count", type: "number", min: 2, max: 4, default: 3, label: { ko: "표시 수", ja: "表示数" } }],
+    render(o) {
+      const n = o.count || 3;
+      const cards = Array.from({ length: n }, () => `<li class="wf-voice"><div class="wf-flex" style="gap:10px;"><span class="wf-box wf-box--sq" style="width:44px;min-height:0;">👤</span><div><b>お客様 A様</b><br><span style="color:#e6a700;">★★★★★</span></div></div><p style="font-size:12px;color:#555;margin:10px 0 0;">お客様の声・レビューコメントが入ります。</p></li>`).join("\n        ");
+      return section(`      <h2 class="wf-section__ttl">お客様の声 VOICE</h2>
+      <ul class="wf-grid wf-grid--${n}" style="margin-top:16px;">
+        ${cards}
+      </ul>`);
+    },
+  },
 };
 
 // 컴포넌트 기본 옵션 추출

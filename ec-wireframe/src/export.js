@@ -183,6 +183,22 @@ const INTERACTION_SCRIPT = `<script>
     if(x)x.addEventListener('click',function(){set(cur+1);});
     set(0);
   });
+  // FAQ 아코디언: 질문 클릭 시 답변 펼침
+  document.querySelectorAll('.wf-faq__q').forEach(function(q){
+    q.addEventListener('click',function(){q.parentElement.classList.toggle('is-open');});
+  });
+  // 스크롤 리빌(페이드인 / 슬라이드업). 관찰 안 되는 환경 대비 타임아웃 폴백으로 반드시 표시.
+  (function(){
+    var els=[].slice.call(document.querySelectorAll('.wf-reveal'));
+    if(!els.length)return;
+    function showAll(){els.forEach(function(e){e.classList.add('is-in');});}
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(ents){ents.forEach(function(en){
+        if(en.isIntersecting){en.target.classList.add('is-in');io.unobserve(en.target);}});},{threshold:0.12});
+      els.forEach(function(e){io.observe(e);});
+      setTimeout(showAll,1500);
+    } else { showAll(); }
+  })();
 })();
 <\/script>`;
 
@@ -230,6 +246,7 @@ export function buildDocument(state, css) {
 <style>
 ${css}
 </style>
+<noscript><style>.wf-reveal{opacity:1 !important;transform:none !important;}</style></noscript>
 </head>
 <body class="${bodyClass}">
 

@@ -104,6 +104,8 @@ export const strings = {
       related: "관련 상품", "cart-steps": "스텝 인디케이터", "cart-items": "카트 아이템",
       "cart-summary": "금액 요약", "mypage-overview": "회원 개요", "mypage-menu": "메뉴 그리드",
       "free-banner": "자유 배너", "free-text": "자유 텍스트 블록",
+      "media-text": "미디어+텍스트", "feature-cols": "특징 컬럼", "cta-band": "CTA 밴드",
+      "faq": "FAQ 아코디언", "steps": "이용 흐름 STEP", "voice": "고객의 소리",
     },
     note: {
       hero: (o) => `자동슬라이드 ${o.slides || 5}매${o.autoplay ? "" : "(자동재생 off)"}${o.arrows ? " / 좌우화살표" : ""}${o.indicator ? " · 인디케이터" : ""} / 스와이프(SP)`,
@@ -120,6 +122,8 @@ export const strings = {
       related: () => "이 상품을 본 사람은 / 관련상품 캐러셀",
       "cart-steps": () => "カート→情報入力→確認→完了",
       "mypage-menu": () => "注文履歴 / お気に入り / 会員情報 / 住所帳 …",
+      "media-text": (o) => `이미지↔텍스트 교차(${o.imageSide === "left" ? "이미지 왼쪽" : "이미지 오른쪽"}) / CTA→상세페이지${o.slides > 1 ? " / 이미지 슬라이드" : ""}${o.anim && o.anim !== "none" ? " / " + (o.anim === "fade" ? "페이드인" : "슬라이드업") : ""}`,
+      "faq": () => "질문 클릭 → 아코디언으로 펼쳐짐",
     },
   },
   ja: {
@@ -132,6 +136,8 @@ export const strings = {
       related: "関連商品", "cart-steps": "ステップインジケータ", "cart-items": "カートアイテム",
       "cart-summary": "金額サマリー", "mypage-overview": "会員概要", "mypage-menu": "メニューグリッド",
       "free-banner": "フリーバナー", "free-text": "フリーテキスト",
+      "media-text": "メディア+テキスト", "feature-cols": "特徴カラム", "cta-band": "CTAバンド",
+      "faq": "FAQアコーディオン", "steps": "利用の流れ STEP", "voice": "お客様の声",
     },
     note: {
       hero: (o) => `自動スライド${o.slides || 5}枚${o.autoplay ? "" : "(自動再生off)"}${o.arrows ? " / 左右矢印" : ""}${o.indicator ? " · インジケータ" : ""} / スワイプ(SP)`,
@@ -148,6 +154,8 @@ export const strings = {
       related: () => "この商品を見た人は / 関連商品カルーセル",
       "cart-steps": () => "カート→情報入力→確認→完了",
       "mypage-menu": () => "注文履歴 / お気に入り / 会員情報 / 住所帳 …",
+      "media-text": (o) => `画像↔テキスト交互(${o.imageSide === "left" ? "画像左" : "画像右"}) / CTA→詳細ページ${o.slides > 1 ? " / 画像スライド" : ""}${o.anim && o.anim !== "none" ? " / " + (o.anim === "fade" ? "フェードイン" : "スライドアップ") : ""}`,
+      "faq": () => "質問クリック → アコーディオン展開",
     },
   },
 };

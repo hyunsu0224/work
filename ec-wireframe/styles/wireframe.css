@@ -219,6 +219,10 @@ img{max-width:100%;display:block;}
   .wf-box--hero{min-height:180px;}
   .wf-sortbar{flex-direction:column;gap:8px;align-items:stretch;}
   .wf-cartitem{grid-template-columns:72px 1fr;}
+  .wf-mediatext{grid-template-columns:1fr;}
+  .wf-mediatext .wf-mediatext__media{order:1;}
+  .wf-mediatext .wf-mediatext__body{order:2;}
+  .wf-mediatext__cta{text-align:left;}
 }
 
 /* =========================================================================
@@ -262,6 +266,42 @@ img{max-width:100%;display:block;}
 .wf-gallery__thumbs{margin-top:12px;}
 .wf-gallery__thumbs .wf-box{cursor:pointer;}
 .wf-gallery__thumbs .wf-box.is-active{outline:2px solid var(--wf-line);outline-offset:1px;}
+
+/* =========================================================================
+   LP 리치 컴포넌트
+   ========================================================================= */
+/* 미디어+텍스트(좌우 교차) */
+.wf-mediatext{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;}
+.wf-mediatext__media{order:1;}
+.wf-mediatext__body{order:2;}
+.wf-mediatext--imgright .wf-mediatext__media{order:2;}
+.wf-mediatext--imgright .wf-mediatext__body{order:1;}
+.wf-mediatext__ttl{font-size:20px;margin:0 0 12px;}
+.wf-mediatext__desc{color:#555;margin:0;line-height:1.7;}
+.wf-mediatext__cta{text-align:right;margin-top:20px;}
+.wf-btn{display:inline-block;border:1px solid var(--wf-line);padding:10px 24px;font-size:13px;background:#fff;}
+.wf-btn--lg{padding:14px 40px;font-size:15px;font-weight:bold;}
+
+/* CTA 밴드 */
+.wf-ctaband{border:2px solid var(--wf-line);background:#f3f3f3;text-align:center;padding:32px 16px;}
+.wf-ctaband__h{font-size:20px;font-weight:bold;margin-bottom:16px;}
+
+/* FAQ 아코디언 */
+.wf-faq__item{border:1px solid #ccc;margin-bottom:8px;}
+.wf-faq__q{padding:14px 40px 14px 16px;cursor:pointer;font-weight:bold;position:relative;}
+.wf-faq__q::after{content:"＋";position:absolute;right:16px;top:14px;}
+.wf-faq__item.is-open .wf-faq__q::after{content:"－";}
+.wf-faq__a{display:none;padding:0 16px 14px;color:#555;font-size:13px;line-height:1.7;}
+.wf-faq__item.is-open .wf-faq__a{display:block;}
+
+/* 특징 / STEP / VOICE 카드 */
+.wf-feature,.wf-flowstep,.wf-voice{border:1px solid #eee;padding:16px;}
+.wf-flowstep__no{font-weight:bold;border-bottom:2px solid var(--wf-line);display:inline-block;padding-bottom:2px;}
+
+/* 스크롤 리빌 애니메이션(페이드인 / 슬라이드업) */
+.wf-reveal{opacity:0;transition:opacity .6s ease, transform .6s ease;}
+.wf-reveal--slide{transform:translateY(28px);}
+.wf-reveal.is-in{opacity:1;transform:none;}
 
 /* =========================================================================
    ANNOTATION  —  주석/코멘트 + 표시 토글

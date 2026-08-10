@@ -40,19 +40,26 @@ export const templates = {
   ],
   lp: [
     { comp: "free-banner", opts: {} },
+    { comp: "feature-cols", opts: { cols: 3 } },
+    { comp: "media-text", opts: { imageSide: "right", anim: "fade" } },
+    { comp: "media-text", opts: { imageSide: "left", anim: "slide", slides: 3 } },
+    { comp: "voice", opts: {} },
     { comp: "carousel", opts: { title: "おすすめ商品", badge: true, sale: false, more: true } },
-    { comp: "free-text", opts: {} },
+    { comp: "faq", opts: {} },
+    { comp: "cta-band", opts: {} },
   ],
 };
 
 // 각 페이지 유형에서 팔레트에 노출할 추가 가능한 컴포넌트(순서=표시순).
 // 공통 컴포넌트는 모든 페이지에서 추가 가능.
 const COMMON = ["carousel", "topics", "category-grid", "info", "free-banner", "free-text"];
+// LP/특집형 리치 컴포넌트 — 전 페이지에서 추가 가능
+const LP_RICH = ["media-text", "feature-cols", "cta-band", "faq", "steps", "voice"];
 export const palette = {
-  top: ["hero", "promo", "ranking", ...COMMON],
-  list: ["breadcrumb", "page-title", "sortbar", "list-body", "pagination", ...COMMON],
-  detail: ["breadcrumb", "detail-main", "detail-desc", "review", "related", ...COMMON],
-  cart: ["cart-steps", "cart-items", "cart-summary", ...COMMON],
-  mypage: ["mypage-overview", "mypage-menu", ...COMMON],
-  lp: ["free-banner", "free-text", "hero", "promo", ...COMMON],
+  top: ["hero", "promo", "ranking", ...COMMON, ...LP_RICH],
+  list: ["breadcrumb", "page-title", "sortbar", "list-body", "pagination", ...COMMON, ...LP_RICH],
+  detail: ["breadcrumb", "detail-main", "detail-desc", "review", "related", ...COMMON, ...LP_RICH],
+  cart: ["cart-steps", "cart-items", "cart-summary", ...COMMON, ...LP_RICH],
+  mypage: ["mypage-overview", "mypage-menu", ...COMMON, ...LP_RICH],
+  lp: ["free-banner", "media-text", "feature-cols", "voice", "faq", "steps", "cta-band", "free-text", "hero", "promo", ...COMMON],
 };
