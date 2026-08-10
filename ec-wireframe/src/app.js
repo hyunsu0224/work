@@ -199,6 +199,8 @@ function renderTopbar() {
     <button id="btnSave" class="btn btn-ghost">${ui().save}</button>
     <button id="btnLoad" class="btn btn-ghost">${ui().load}</button>
     <button id="btnReset" class="btn btn-ghost">${ui().reset}</button>
+    <button id="btnOpen" class="btn btn-ghost">${ui().openTab}</button>
+    <button id="btnCopy" class="btn btn-ghost">${ui().copyHtml}</button>
     <button id="btnDownload" class="btn btn-primary">${ui().download}</button>
     <input id="fileLoad" type="file" accept="application/json,.json" hidden>
   `;
@@ -232,6 +234,8 @@ function renderTopbar() {
   $("#btnUndo").addEventListener("click", undo);
   $("#btnRedo").addEventListener("click", redo);
   $("#btnDownload").addEventListener("click", download);
+  $("#btnOpen").addEventListener("click", openFull);
+  $("#btnCopy").addEventListener("click", copyHtml);
   $("#btnSave").addEventListener("click", saveJson);
   $("#btnLoad").addEventListener("click", () => $("#fileLoad").click());
   $("#fileLoad").addEventListener("change", loadJson);
@@ -500,6 +504,45 @@ function download() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// 전체보기: 빌더 크롬 없이 실제 풀사이즈로 새 탭에서 확인
+function openFull() {
+  const blob = new Blob([buildDocument(state, CSS)], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+// HTML 복사: 파일 다운로드 없이 마크업을 클립보드로
+function flashBtn(sel, msg) {
+  const b = $(sel);
+  if (!b) return;
+  const prev = b.textContent;
+  b.textContent = msg;
+  setTimeout(() => (b.textContent = prev), 1200);
+}
+function copyHtml() {
+  const html = buildDocument(state, CSS);
+  const done = () => flashBtn("#btnCopy", ui().copied);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(html).then(done).catch(() => fallbackCopy(html, done));
+  } else {
+    fallbackCopy(html, done);
+  }
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    done();
+  } catch (_) {}
+  ta.remove();
 }
 
 // ======================================================================
