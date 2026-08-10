@@ -91,7 +91,7 @@ const gate = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔒 EC 와이어프레임 빌더</title>
+<title>🔒 EC ワイヤーフレーム ビルダー</title>
 <style>
   body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
     background:#f4f5f7;font-family:-apple-system,"Yu Gothic UI",Meiryo,sans-serif;color:#1f2430;}
@@ -110,10 +110,10 @@ const gate = `<!DOCTYPE html>
 <body>
   <form class="box" id="f">
     <div class="lock">🔒</div>
-    <h1>EC 와이어프레임 빌더</h1>
-    <p>비밀번호를 입력하면 페이지가 열립니다.</p>
-    <input id="pw" type="password" autocomplete="current-password" placeholder="비밀번호" autofocus>
-    <button type="submit" id="btn">열기</button>
+    <h1>EC ワイヤーフレーム ビルダー</h1>
+    <p>パスワードを入力するとページが開きます。</p>
+    <input id="pw" type="password" autocomplete="current-password" placeholder="パスワード" autofocus>
+    <button type="submit" id="btn">開く</button>
     <div class="err" id="err"></div>
   </form>
 <script>
@@ -132,7 +132,7 @@ const gate = `<!DOCTYPE html>
   async function tryPw(p){
     btn.disabled=true;err.textContent="";
     try{ var html=await unlock(p); try{sessionStorage.setItem("wf_pw",p);}catch(e){} reveal(html); }
-    catch(e){ err.textContent="비밀번호가 올바르지 않습니다."; btn.disabled=false; pw.select(); }
+    catch(e){ err.textContent="パスワードが正しくありません。"; btn.disabled=false; pw.select(); }
   }
   f.addEventListener("submit",function(e){e.preventDefault();tryPw(pw.value);});
   // 같은 세션에서 재접속 시 자동 열기

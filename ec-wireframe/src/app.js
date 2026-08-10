@@ -6,7 +6,7 @@ import { buildDocument } from "./export.js";
 import { iconFor } from "./icons.js";
 
 const state = {
-  lang: "ko",
+  lang: "ja", // 신규 접속 기본 언어(저장된 값이 있으면 복원됨)
   device: "both",
   pageType: "top",
   showNotes: true, // 주석(wf-note·코멘트) 표시 여부
@@ -35,7 +35,7 @@ function persist() {
 // 외부에서 들어온 state 후보를 검증·정제(신뢰 못 할 데이터 방어)
 function sanitize(cand) {
   if (!cand || typeof cand !== "object") return null;
-  const lang = ["ko", "ja"].includes(cand.lang) ? cand.lang : "ko";
+  const lang = ["ko", "ja"].includes(cand.lang) ? cand.lang : "ja";
   const device = ["both", "pc", "sp"].includes(cand.device) ? cand.device : "both";
   const pageType = PAGE_TYPES.includes(cand.pageType) ? cand.pageType : "top";
   const showNotes = cand.showNotes !== false;
