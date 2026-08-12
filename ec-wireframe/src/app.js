@@ -513,7 +513,8 @@ function bindPanel() {
     } else if (dup) {
       const i = +dup.dataset.dup;
       const src = state.sections[i];
-      state.sections.splice(i + 1, 0, { comp: src.comp, opts: { ...src.opts }, comment: src.comment || "" });
+      // 깊은 복사(커스텀 블럭의 elements 배열 등 중첩 구조까지 독립적으로)
+      state.sections.splice(i + 1, 0, { comp: src.comp, opts: JSON.parse(JSON.stringify(src.opts)), comment: src.comment || "" });
       selIdx = null;
       renderPanel();
       updatePreview();
