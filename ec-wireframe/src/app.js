@@ -131,15 +131,17 @@ function restore() {
 
 // ---- UI 상태(패널 접힘) 영속화 ----
 const UI_KEY = "ec-wf-ui";
+let guideSeen = false; // 가이드 첫 표시 여부
 function loadUI() {
   try {
     const u = JSON.parse(localStorage.getItem(UI_KEY) || "{}");
     panelCollapsed = !!u.collapsed;
+    guideSeen = !!u.guideSeen;
   } catch (_) {}
 }
 function saveUI() {
   try {
-    localStorage.setItem(UI_KEY, JSON.stringify({ collapsed: panelCollapsed }));
+    localStorage.setItem(UI_KEY, JSON.stringify({ collapsed: panelCollapsed, guideSeen }));
   } catch (_) {}
 }
 function applyCollapsed() {
@@ -195,6 +197,7 @@ function renderTopbar() {
     </label>
     <span class="tb-autosave" title="${ui().autosave}">● ${ui().autosave}</span>
     <div class="tb-spacer"></div>
+    <button id="btnGuide" class="btn btn-ghost">${ui().guide}</button>
     <button id="btnRequest" class="btn btn-ghost" title="GitHub Issue">${ui().request}</button>
     <button id="btnUndo" class="btn btn-ico" title="${ui().undo} (Ctrl+Z)">↶</button>
     <button id="btnRedo" class="btn btn-ico" title="${ui().redo} (Ctrl+Shift+Z)">↷</button>
@@ -248,6 +251,7 @@ function renderTopbar() {
   $("#btnRequest").addEventListener("click", () => {
     window.open(REPO_URL + "/issues/new?template=component-request.yml", "_blank");
   });
+  $("#btnGuide").addEventListener("click", openGuide);
   $("#btnUndo").addEventListener("click", undo);
   $("#btnRedo").addEventListener("click", redo);
   $("#btnDownload").addEventListener("click", download);
@@ -523,6 +527,79 @@ function download() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// ======================================================================
+//  사용 가이드 (일본어) — ❓ ガイド 버튼 / 첫 접속 자동 표시
+// ======================================================================
+function guideHtml() {
+  return `
+  <h2>使い方ガイド</h2>
+  <p>ECサイトのローファイ・ワイヤーフレームを <b>組み立て → プレビュー → HTML出力</b> するツールです。色や画像は入れず、構造と配置だけを素早く確認します。</p>
+
+  <h3>基本の流れ</h3>
+  <ol>
+    <li>上部で <b>ページ種別</b>（TOP／一覧／詳細／カート／マイページ／LP）を選ぶ → 標準構成が入ります。</li>
+    <li>左パネルの <b>コンポーネント</b> を押してセクションを追加。<b>⠿ドラッグ</b>で並べ替え、<b>⧉複製</b>、<b>✕削除</b>。</li>
+    <li>各セクションの <b>オプション</b>（列数・枚数・テキスト等）を編集 → 右側で即プレビュー。</li>
+    <li><b>⬇ ダウンロード</b> または <b>⧉ HTMLコピー</b> で書き出し。</li>
+  </ol>
+
+  <h3>セクションの編集</h3>
+  <ul>
+    <li><b>追加位置</b>：セクション名をクリックして選択すると、その下に挿入されます（もう一度クリックで解除／未選択なら末尾に追加）。</li>
+    <li><b>コメント</b>：各セクションにメモを書くと、プレビューに黄色の吹き出しで表示されます（仕様メモ・指示用）。</li>
+    <li><b>内容編集</b>：カテゴリ名・商品名・価格などを入力すると、ダミーが実際のテキストに変わります（空欄ならダミーのまま）。</li>
+  </ul>
+
+  <h3>ツールバー</h3>
+  <table>
+    <tr><td>◀ / ☰ 編集</td><td>編集パネルを開閉。閉じるとプレビューが全体に広がります（スマホで便利）。</td></tr>
+    <tr><td>ページ種別</td><td>ページの標準テンプレートを読み込み。</td></tr>
+    <tr><td>📁 テンプレート</td><td>共有テンプレートを読み込み（現在の内容は置き換わります）。</td></tr>
+    <tr><td>注記 ON/OFF</td><td>注記とコメントの表示切替（<b>開発用</b>↔<b>クライアント用</b>）。書き出したファイルでも切替可。</td></tr>
+    <tr><td>↶ / ↷</td><td>元に戻す／やり直し（<span class="guide-kbd">Ctrl+Z</span> / <span class="guide-kbd">Ctrl+Shift+Z</span>）。</td></tr>
+    <tr><td>💾 / 📂</td><td>構成を .json で保存／読み込み（バックアップ・共有用）。</td></tr>
+    <tr><td>🔍 全体表示</td><td>ビルダーの枠なしで、実寸のワイヤーフレームを新しいタブで確認。</td></tr>
+    <tr><td>⧉ HTMLコピー</td><td>マークアップをクリップボードへコピー。</td></tr>
+    <tr><td>⬇ ダウンロード</td><td>自己完結の単一HTMLファイルを保存。</td></tr>
+    <tr><td>💬 リクエスト</td><td>追加してほしいコンポーネント等の要望を送る（GitHub）。</td></tr>
+  </table>
+
+  <h3>動くインタラクション（プレビュー・書き出し先の両方で動作）</h3>
+  <ul>
+    <li><b>スライダー</b>（hero・メディア＋テキスト）：矢印・自動送り。</li>
+    <li><b>商品カルーセル</b>：左右の矢印でスクロール。</li>
+    <li><b>タブ</b>（ランキング）：クリックで中身が切り替わります。</li>
+    <li><b>ギャラリー</b>（詳細）：サムネイル・矢印でメイン画像を切替。</li>
+    <li><b>FAQ</b>：クリックで開閉。<b>アニメーション</b>：スクロールでフェードイン／スライドアップ。</li>
+  </ul>
+
+  <h3>保存について</h3>
+  <p>編集内容は <b>自動保存</b> され、タブを閉じても・再読み込みしても復元されます（同じブラウザ）。大事な案はときどき <b>💾 構成保存</b> でファイルにバックアップしてください。</p>
+  `;
+}
+function openGuide() {
+  let ov = document.getElementById("wfGuide");
+  if (!ov) {
+    ov = document.createElement("div");
+    ov.id = "wfGuide";
+    ov.className = "guide-overlay";
+    ov.innerHTML = `<div class="guide-box"><button class="guide-close" id="guideClose" aria-label="close">✕</button>${guideHtml()}</div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) closeGuide();
+    });
+    document.getElementById("guideClose").addEventListener("click", closeGuide);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeGuide();
+    });
+  }
+  ov.style.display = "flex";
+}
+function closeGuide() {
+  const ov = document.getElementById("wfGuide");
+  if (ov) ov.style.display = "none";
+}
+
 // 전체보기: 빌더 크롬 없이 실제 풀사이즈로 새 탭에서 확인
 function openFull() {
   const blob = new Blob([buildDocument(state, CSS)], { type: "text/html;charset=utf-8" });
@@ -597,6 +674,11 @@ async function init() {
   bindShortcuts();
   histInit(); // 현재 상태를 히스토리 0번으로
   renderAll();
+  if (!guideSeen) {
+    openGuide(); // 첫 접속 시 가이드 자동 표시
+    guideSeen = true;
+    saveUI();
+  }
 }
 
 init();
