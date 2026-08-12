@@ -444,8 +444,8 @@ function renderElRow(i, ei, el) {
   if (el.type === "spacer") fields += celSelect(`${base}:size`, el.size || "md", [["sm", "小"], ["md", "中"], ["lg", "大"]]);
   if (el.type !== "spacer" && el.type !== "divider") fields += celSelect(`${base}:align`, el.align || "left", ALIGN_OPTS);
   fields += celSelect(`${base}:width`, el.width || "full", WIDTH_OPTS); // 幅(좌우/다단 배치)
-  return `<div class="cel">
-            <div class="cel-head"><span class="cel-type">${CUST_LABEL[el.type] || el.type}</span>
+  return `<div class="cel" data-si="${i}" data-ei="${ei}">
+            <div class="cel-head"><span class="cel-drag" draggable="true" title="${ui().dragHint}">⠿</span><span class="cel-type">${CUST_LABEL[el.type] || el.type}</span>
               <span class="cel-act"><button class="ico" data-cmove="${base}:-1" title="${ui().moveUp}">▲</button><button class="ico" data-cmove="${base}:1" title="${ui().moveDown}">▼</button><button class="ico ico-del" data-cdel="${base}" title="${ui().remove}">✕</button></span>
             </div>
             ${fields ? `<div class="cel-fields">${fields}</div>` : ""}
@@ -573,20 +573,38 @@ function bindPanel() {
     }
   });
 
-  // ---- 드래그 & 드롭 정렬 ----
-  let dragFrom = null;
+  // ---- 드래그 & 드롭 정렬 (섹션 / 커스텀 요소) ----
+  let dragFrom = null; // 섹션 드래그
+  let elDrag = null; // 커스텀 요소 드래그 {sec, ei}
   panel.addEventListener("dragstart", (e) => {
+    const celHandle = e.target.closest(".cel-drag");
+    if (celHandle) {
+      // 커스텀 블럭 요소 드래그(섹션 드래그로 번지지 않게 먼저 처리)
+      const cel = celHandle.closest(".cel");
+      elDrag = { sec: +cel.dataset.si, ei: +cel.dataset.ei };
+      e.dataTransfer.effectAllowed = "move";
+      cel.classList.add("is-drag");
+      return;
+    }
     const sec = e.target.closest(".sec");
     if (!sec) return;
     dragFrom = +sec.dataset.i;
     e.dataTransfer.effectAllowed = "move";
     sec.classList.add("is-drag");
   });
-  panel.addEventListener("dragend", (e) => {
-    const sec = e.target.closest(".sec");
-    if (sec) sec.classList.remove("is-drag");
+  panel.addEventListener("dragend", () => {
+    panel.querySelectorAll(".is-drag").forEach((el) => el.classList.remove("is-drag"));
+    panel.querySelectorAll(".is-over").forEach((el) => el.classList.remove("is-over"));
   });
   panel.addEventListener("dragover", (e) => {
+    if (elDrag) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const over = e.target.closest(".cel");
+      panel.querySelectorAll(".cel.is-over").forEach((el) => el.classList.remove("is-over"));
+      if (over && +over.dataset.si === elDrag.sec) over.classList.add("is-over");
+      return;
+    }
     if (dragFrom == null) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -595,6 +613,23 @@ function bindPanel() {
     if (over) over.classList.add("is-over");
   });
   panel.addEventListener("drop", (e) => {
+    if (elDrag) {
+      e.preventDefault();
+      const over = e.target.closest(".cel");
+      if (over && +over.dataset.si === elDrag.sec) {
+        const arr = state.sections[elDrag.sec].opts.elements;
+        const to = +over.dataset.ei;
+        if (to !== elDrag.ei) {
+          const [m] = arr.splice(elDrag.ei, 1);
+          arr.splice(to, 0, m);
+          renderPanel();
+          updatePreview();
+          histPush();
+        }
+      }
+      elDrag = null;
+      return;
+    }
     if (dragFrom == null) return;
     e.preventDefault();
     const over = e.target.closest(".sec");

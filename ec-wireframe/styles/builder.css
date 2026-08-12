@@ -90,8 +90,12 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .chip.cadd:hover{background:#fbeaa0;border-color:#d4a017;color:#5a4b00;}
 .cust-list{display:flex;flex-direction:column;gap:6px;}
 .cel{border:1px solid var(--line);border-radius:6px;background:#fbfcfd;}
-.cel-head{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:1px dashed var(--line);}
-.cel-type{font-size:11px;font-weight:600;}
+.cel-head{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px dashed var(--line);}
+.cel-drag{cursor:grab;color:#b7bcc6;font-size:13px;user-select:none;flex:0 0 auto;}
+.cel-drag:active{cursor:grabbing;}
+.cel-type{font-size:11px;font-weight:600;flex:1;}
+.cel.is-drag{opacity:.45;}
+.cel.is-over{outline:2px dashed var(--accent);outline-offset:-2px;}
 .cel-act{display:flex;gap:2px;}
 .cel-fields{display:flex;flex-wrap:wrap;gap:5px;padding:7px 8px;align-items:center;}
 .cel-fields input[type=text]{flex:1;min-width:90px;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
