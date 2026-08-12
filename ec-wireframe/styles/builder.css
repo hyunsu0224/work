@@ -83,9 +83,11 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .opt input,.opt select{font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);}
 .opt-bool{justify-content:flex-start;gap:6px;cursor:pointer;}
 
-/* 커스텀 블럭 편집기 */
+/* 커스텀 블럭: 기존 블럭과 시각적으로 차별(옅은 노란빛) */
+.sec.is-custom .sec-head{background:#fdf7db;}
 .cust-add{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
-.chip.cadd{font-size:11px;padding:4px 8px;border-radius:6px;}
+.chip.cadd{font-size:11px;padding:4px 8px;border-radius:6px;background:#fdf3c4;border-color:#e6d27a;color:#6b5900;}
+.chip.cadd:hover{background:#fbeaa0;border-color:#d4a017;color:#5a4b00;}
 .cust-list{display:flex;flex-direction:column;gap:6px;}
 .cel{border:1px solid var(--line);border-radius:6px;background:#fbfcfd;}
 .cel-head{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:1px dashed var(--line);}

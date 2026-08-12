@@ -332,7 +332,7 @@ function renderPanel() {
         const sel = i === selIdx;
         const cmt = String(s.comment || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return `
-        <div class="sec${sel ? " is-sel" : ""}" data-i="${i}">
+        <div class="sec${sel ? " is-sel" : ""}${s.comp === "custom" ? " is-custom" : ""}" data-i="${i}">
           <div class="sec-head">
             <span class="drag" title="${ui().dragHint}" draggable="true">⠿</span>
             <span class="sec-idx">${i + 1}</span>
