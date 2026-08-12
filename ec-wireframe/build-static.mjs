@@ -35,6 +35,7 @@ const bundleJs = [
   `const WF_CSS = ${JSON.stringify(wireframeCss)};`,
   strip(rd("src/i18n.js")),
   strip(rd("src/templates.js")),
+  strip(rd("src/gallery.js")),
   strip(rd("src/icons.js")),
   strip(rd("src/catalog.js")),
   strip(rd("src/export.js")),

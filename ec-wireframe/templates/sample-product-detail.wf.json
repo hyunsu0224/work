@@ -1,0 +1,15 @@
+{
+  "name": "商品詳細サンプル",
+  "desc": "パンくず・ギャラリー・バリアント・レビュー・関連商品",
+  "lang": "ja",
+  "device": "both",
+  "pageType": "detail",
+  "showNotes": true,
+  "sections": [
+    { "comp": "breadcrumb", "opts": {}, "comment": "" },
+    { "comp": "detail-main", "opts": { "variant": "サイズ·カラー", "gallery": 5, "stickyCta": true, "instant": true }, "comment": "SPは下部固定CTA推奨" },
+    { "comp": "detail-desc", "opts": {}, "comment": "" },
+    { "comp": "review", "opts": { "count": 3 }, "comment": "" },
+    { "comp": "related", "opts": { "count": 4 }, "comment": "" }
+  ]
+}

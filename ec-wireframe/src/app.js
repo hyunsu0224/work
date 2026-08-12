@@ -4,6 +4,7 @@ import { templates, palette, PAGE_TYPES } from "./templates.js";
 import { i18n, strings } from "./i18n.js";
 import { buildDocument } from "./export.js";
 import { iconFor } from "./icons.js";
+import { gallery } from "./gallery.js";
 
 const state = {
   lang: "ja", // 신규 접속 기본 언어(저장된 값이 있으면 복원됨)
@@ -190,6 +191,11 @@ function renderTopbar() {
     <label class="tb-field">${ui().language}
       <select id="selLang">${langOpts}</select>
     </label>
+    ${gallery.length ? `<label class="tb-field">${ui().template}
+      <select id="selTpl"><option value="">${ui().templatePick}</option>${gallery
+        .map((g) => `<option value="${g.id}" title="${(g.desc || "").replace(/"/g, "&quot;")}">${g.name}</option>`)
+        .join("")}</select>
+    </label>` : ""}
     <label class="tb-field">${ui().notesToggle}
       <button id="btnNotes" class="btn btn-toggle ${state.showNotes ? "is-on" : ""}">${state.showNotes ? "ON" : "OFF"}</button>
     </label>
@@ -221,6 +227,22 @@ function renderTopbar() {
     state.lang = e.target.value;
     renderAll();
   });
+  const selTpl = $("#selTpl");
+  if (selTpl) {
+    selTpl.addEventListener("change", (e) => {
+      const id = e.target.value;
+      e.target.value = ""; // 선택 표시 초기화(다음 선택 허용)
+      if (!id) return;
+      const tpl = gallery.find((g) => g.id === id);
+      if (!tpl) return;
+      if (!confirm(ui().templateWarn)) return; // 현재 작업 사라짐 경고
+      const clean = sanitize(tpl.state);
+      if (!clean) return;
+      applyState(clean);
+      renderAll();
+      histPush();
+    });
+  }
   $("#btnReset").addEventListener("click", () => {
     if (confirm(ui().confirmReset)) {
       loadTemplate(state.pageType);
