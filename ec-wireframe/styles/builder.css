@@ -83,6 +83,18 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .opt input,.opt select{font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);}
 .opt-bool{justify-content:flex-start;gap:6px;cursor:pointer;}
 
+/* 커스텀 블럭 편집기 */
+.cust-add{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
+.chip.cadd{font-size:11px;padding:4px 8px;border-radius:6px;}
+.cust-list{display:flex;flex-direction:column;gap:6px;}
+.cel{border:1px solid var(--line);border-radius:6px;background:#fbfcfd;}
+.cel-head{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:1px dashed var(--line);}
+.cel-type{font-size:11px;font-weight:600;}
+.cel-act{display:flex;gap:2px;}
+.cel-fields{display:flex;flex-wrap:wrap;gap:5px;padding:7px 8px;align-items:center;}
+.cel-fields input[type=text]{flex:1;min-width:90px;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+.cel-fields select{font-size:12px;padding:3px 5px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+
 /* ---- 스테이지(프리뷰) ---- */
 .stage{min-height:0;overflow:auto;padding:20px;display:flex;justify-content:center;background:#e9ecf0;}
 .frame-wrap{background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.12);height:100%;}

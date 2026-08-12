@@ -49,6 +49,7 @@ export const icons = {
   faq: svg(rep(3, (i) => b(3, 3.5 + i * 5, 22, 4) + `<path d="M22 5.5${i * 5 > 0 ? "" : ""}h2M23 ${4.5 + i * 5}v2" stroke="#666" stroke-width=".7"/>`)),
   steps: svg(rep(3, (i) => b(2 + i * 9, 7, 6, 7)) + `<path d="M8.5 10.5h2M17.5 10.5h2" stroke="#666" stroke-width="1"/>`),
   voice: svg(c(6, 7, 3) + rep(3, (i) => c(11 + i * 2.6, 6, 1, "#e6c34d")) + l(3, 13, 22) + l(3, 16, 15)),
+  custom: svg(l(3, 3, 14) + im(3, 7, 11, 6) + b(3, 15, 9, 3, "#666") + `<path d="M20 3l4 4-4 4" stroke="#999" stroke-width=".7" fill="none"/>`),
 };
 
 // 기본(미정의) 아이콘

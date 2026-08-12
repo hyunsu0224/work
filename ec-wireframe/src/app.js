@@ -45,11 +45,16 @@ function sanitize(cand) {
   const sections = Array.isArray(cand.sections)
     ? cand.sections
         .filter((s) => s && catalog[s.comp]) // 알 수 없는 컴포넌트 제거
-        .map((s) => ({
-          comp: s.comp,
-          opts: { ...defaultOpts(s.comp), ...(s.opts || {}) },
-          comment: typeof s.comment === "string" ? s.comment : "",
-        }))
+        .map((s) => {
+          const opts = { ...defaultOpts(s.comp), ...(s.opts || {}) };
+          if (s.comp === "custom") {
+            const valid = new Set(["heading", "text", "image", "button", "spacer", "divider"]);
+            opts.elements = Array.isArray(opts.elements)
+              ? opts.elements.filter((el) => el && valid.has(el.type)).map((el) => ({ ...el }))
+              : [];
+          }
+          return { comp: s.comp, opts, comment: typeof s.comment === "string" ? s.comment : "" };
+        })
     : [];
   return { lang, device, pageType, showNotes, sections };
 }
@@ -323,6 +328,7 @@ function renderPanel() {
     list = state.sections
       .map((s, i) => {
         const opts = renderOptions(s, i);
+        const cust = s.comp === "custom" ? renderCustomEditor(s, i) : "";
         const sel = i === selIdx;
         const cmt = String(s.comment || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return `
@@ -342,6 +348,7 @@ function renderPanel() {
           ${sel ? `<div class="sec-inserthint">${ui().insertHint}</div>` : ""}
           <div class="sec-body">
             <textarea class="sec-comment" data-comment="${i}" placeholder="${ui().commentPh}" rows="1">${cmt}</textarea>
+            ${cust ? `<div class="sec-opts">${cust}</div>` : ""}
             ${opts ? `<div class="sec-opts">${opts}</div>` : ""}
           </div>
         </div>`;
@@ -394,7 +401,59 @@ function renderOptions(s, i) {
 
 // 새 섹션 생성
 function newSection(id) {
-  return { comp: id, opts: defaultOpts(id), comment: "" };
+  const opts = defaultOpts(id);
+  if (id === "custom" && !Array.isArray(opts.elements)) opts.elements = [];
+  return { comp: id, opts, comment: "" };
+}
+
+// ---- 커스텀 블럭 편집기 ----
+const CUST_TYPES = [
+  ["heading", "見出し"], ["text", "テキスト"], ["image", "画像"],
+  ["button", "ボタン"], ["spacer", "余白"], ["divider", "区切り線"],
+];
+const CUST_LABEL = Object.fromEntries(CUST_TYPES);
+const ALIGN_OPTS = [["left", "左"], ["center", "中央"], ["right", "右"]];
+
+function newEl(type) {
+  switch (type) {
+    case "heading": return { type, text: "見出しテキスト", align: "left" };
+    case "text": return { type, text: "テキストが入ります。", align: "left" };
+    case "image": return { type, label: "画像", size: "md", align: "center" };
+    case "button": return { type, text: "ボタン", align: "center" };
+    case "spacer": return { type, size: "md" };
+    default: return { type }; // divider
+  }
+}
+
+function celText(name, val, ph) {
+  return `<input type="text" data-cel="${name}" value="${String(val == null ? "" : val).replace(/"/g, "&quot;")}" placeholder="${ph || ""}">`;
+}
+function celSelect(name, val, opts) {
+  const os = opts.map(([v, l]) => `<option value="${v}" ${String(v) === String(val) ? "selected" : ""}>${l}</option>`).join("");
+  return `<select data-cel="${name}">${os}</select>`;
+}
+function renderElRow(i, ei, el) {
+  const base = `${i}:${ei}`;
+  let fields = "";
+  if (el.type === "heading" || el.type === "text" || el.type === "button") fields += celText(`${base}:text`, el.text, "");
+  if (el.type === "image") {
+    fields += celText(`${base}:label`, el.label, "ラベル");
+    fields += celSelect(`${base}:size`, el.size || "md", [["sm", "小"], ["md", "中"], ["lg", "大"], ["hero", "特大"]]);
+  }
+  if (el.type === "spacer") fields += celSelect(`${base}:size`, el.size || "md", [["sm", "小"], ["md", "中"], ["lg", "大"]]);
+  if (el.type !== "spacer" && el.type !== "divider") fields += celSelect(`${base}:align`, el.align || "left", ALIGN_OPTS);
+  return `<div class="cel">
+            <div class="cel-head"><span class="cel-type">${CUST_LABEL[el.type] || el.type}</span>
+              <span class="cel-act"><button class="ico" data-cmove="${base}:-1" title="${ui().moveUp}">▲</button><button class="ico" data-cmove="${base}:1" title="${ui().moveDown}">▼</button><button class="ico ico-del" data-cdel="${base}" title="${ui().remove}">✕</button></span>
+            </div>
+            ${fields ? `<div class="cel-fields">${fields}</div>` : ""}
+          </div>`;
+}
+function renderCustomEditor(s, i) {
+  const els = Array.isArray(s.opts.elements) ? s.opts.elements : [];
+  const add = CUST_TYPES.map(([t, l]) => `<button class="chip cadd" data-cadd="${i}:${t}">＋${l}</button>`).join("");
+  const list = els.length ? els.map((el, ei) => renderElRow(i, ei, el)).join("") : `<p class="empty" style="padding:8px;">要素を追加してください</p>`;
+  return `<div class="cust"><div class="cust-add">${add}</div><div class="cust-list">${list}</div></div>`;
 }
 
 // ---- 패널 이벤트 (위임) ----
@@ -406,6 +465,40 @@ function bindPanel() {
     const rem = e.target.closest("[data-remove]");
     const mov = e.target.closest("[data-move]");
     const selBtn = e.target.closest("[data-select]");
+    const cadd = e.target.closest("[data-cadd]");
+    const cmove = e.target.closest("[data-cmove]");
+    const cdel = e.target.closest("[data-cdel]");
+    // ---- 커스텀 블럭 원시요소: 추가 / 이동 / 삭제 ----
+    if (cadd) {
+      const [i, type] = cadd.dataset.cadd.split(":");
+      const sec = state.sections[+i];
+      if (!Array.isArray(sec.opts.elements)) sec.opts.elements = [];
+      sec.opts.elements.push(newEl(type));
+      renderPanel();
+      updatePreview();
+      histPush();
+      return;
+    }
+    if (cmove) {
+      const [i, ei, dir] = cmove.dataset.cmove.split(":").map(Number);
+      const arr = state.sections[i].opts.elements || [];
+      const j = ei + dir;
+      if (j >= 0 && j < arr.length) {
+        [arr[ei], arr[j]] = [arr[j], arr[ei]];
+        renderPanel();
+        updatePreview();
+        histPush();
+      }
+      return;
+    }
+    if (cdel) {
+      const [i, ei] = cdel.dataset.cdel.split(":").map(Number);
+      (state.sections[i].opts.elements || []).splice(ei, 1);
+      renderPanel();
+      updatePreview();
+      histPush();
+      return;
+    }
     if (add) {
       const id = add.dataset.add;
       if (selIdx != null && selIdx < state.sections.length) {
@@ -452,6 +545,15 @@ function bindPanel() {
   panel.addEventListener("input", (e) => {
     const opt = e.target.closest("[data-opt]");
     const cmt = e.target.closest("[data-comment]");
+    const cel = e.target.closest("[data-cel]");
+    if (cel) {
+      const [i, ei, prop] = cel.dataset.cel.split(":");
+      const el = state.sections[+i].opts.elements[+ei];
+      if (el) el[prop] = cel.type === "checkbox" ? cel.checked : cel.value;
+      updatePreview();
+      histPushDebounced();
+      return;
+    }
     if (opt) {
       const [i, key] = opt.dataset.opt.split(":");
       let v;

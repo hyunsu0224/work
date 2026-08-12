@@ -53,6 +53,36 @@ ${inner}
   </section>`;
 }
 
+// 사용자 입력 텍스트 이스케이프(커스텀 블럭용)
+function escText(s) {
+  return String(s == null ? "" : s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+// 커스텀 블럭 원시요소 1개 → 마크업
+function renderPrimitive(el) {
+  const al = `text-align:${el.align === "center" ? "center" : el.align === "right" ? "right" : "left"};`;
+  switch (el.type) {
+    case "heading":
+      return `      <h2 class="wf-section__ttl" style="${al}border:0;padding-left:0;">${escText(el.text || "見出し")}</h2>`;
+    case "text":
+      return `      <p style="${al}line-height:1.7;color:#333;margin:8px 0;">${escText(el.text || "テキストが入ります。")}</p>`;
+    case "image": {
+      const h = { sm: "120px", md: "200px", lg: "320px", hero: "360px" }[el.size] || "200px";
+      return `      <div style="${al}"><span class="wf-box wf-box--img" style="display:inline-flex;min-height:${h};min-width:220px;vertical-align:top;">${escText(el.label || "画像")}</span></div>`;
+    }
+    case "button":
+      return `      <div style="${al}margin:10px 0;"><a class="wf-btn" href="#">${escText(el.text || "ボタン")}</a></div>`;
+    case "spacer": {
+      const h = { sm: "12px", md: "28px", lg: "56px" }[el.size] || "28px";
+      return `      <div style="height:${h};"></div>`;
+    }
+    case "divider":
+      return `      <hr style="border:0;border-top:1px solid #ccc;margin:16px 0;">`;
+    default:
+      return "";
+  }
+}
+
 // 카드 내용 오버라이드 옵션(공통) — 비우면 더미
 const cardContentOpts = [
   { key: "name", type: "text", default: "", label: { ko: "상품명", ja: "商品名" } },
@@ -542,6 +572,20 @@ ${sl}
       <ul class="wf-grid wf-grid--${n}" style="margin-top:16px;">
         ${cards}
       </ul>`);
+    },
+  },
+
+  // ---------------------------------------------------------------- 커스텀 블럭
+  // 원시요소(見出し/テキスト/画像/ボタン/余白/区切り線)를 자유롭게 쌓아 만드는 블럭.
+  // opts.elements = [{ type, text?, label?, size?, align? }]
+  custom: {
+    options: [], // flat 옵션 없음 — app.js의 전용 편집기 사용
+    render(o) {
+      const els = Array.isArray(o.elements) ? o.elements : [];
+      if (!els.length) {
+        return section(`      <div class="wf-box" style="min-height:60px;">カスタムブロック（要素を追加してください）</div>`);
+      }
+      return section(els.map(renderPrimitive).join("\n"));
     },
   },
 };

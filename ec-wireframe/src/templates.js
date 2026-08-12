@@ -52,7 +52,7 @@ export const templates = {
 
 // 각 페이지 유형에서 팔레트에 노출할 추가 가능한 컴포넌트(순서=표시순).
 // 공통 컴포넌트는 모든 페이지에서 추가 가능.
-const COMMON = ["carousel", "topics", "category-grid", "info", "free-banner", "free-text"];
+const COMMON = ["custom", "carousel", "topics", "category-grid", "info", "free-banner", "free-text"];
 // LP/특집형 리치 컴포넌트 — 전 페이지에서 추가 가능
 const LP_RICH = ["media-text", "feature-cols", "cta-band", "faq", "steps", "voice"];
 export const palette = {

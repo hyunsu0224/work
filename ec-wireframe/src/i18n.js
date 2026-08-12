@@ -124,6 +124,7 @@ export const strings = {
       "free-banner": "자유 배너", "free-text": "자유 텍스트 블록",
       "media-text": "미디어+텍스트", "feature-cols": "특징 컬럼", "cta-band": "CTA 밴드",
       "faq": "FAQ 아코디언", "steps": "이용 흐름 STEP", "voice": "고객의 소리",
+      "custom": "커스텀 블럭",
     },
     note: {
       hero: (o) => `자동슬라이드 ${o.slides || 5}매${o.autoplay ? "" : "(자동재생 off)"}${o.arrows ? " / 좌우화살표" : ""}${o.indicator ? " · 인디케이터" : ""} / 스와이프(SP)`,
@@ -156,6 +157,7 @@ export const strings = {
       "free-banner": "フリーバナー", "free-text": "フリーテキスト",
       "media-text": "メディア+テキスト", "feature-cols": "特徴カラム", "cta-band": "CTAバンド",
       "faq": "FAQアコーディオン", "steps": "利用の流れ STEP", "voice": "お客様の声",
+      "custom": "カスタムブロック",
     },
     note: {
       hero: (o) => `自動スライド${o.slides || 5}枚${o.autoplay ? "" : "(自動再生off)"}${o.arrows ? " / 左右矢印" : ""}${o.indicator ? " · インジケータ" : ""} / スワイプ(SP)`,
