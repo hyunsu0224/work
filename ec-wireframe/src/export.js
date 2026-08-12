@@ -153,7 +153,6 @@ const SLIDER_SCRIPT = `<script>
 // 캐러셀 화살표 / 탭 전환 / 갤러리 — 실제 동작 인터랙션(프리뷰·다운로드 공통)
 const INTERACTION_SCRIPT = `<script>
 (function(){
-  // 상품 캐러셀: 좌우 화살표로 스크롤
   document.querySelectorAll('.wf-carousel-wrap').forEach(function(w){
     var c=w.querySelector('.wf-carousel');if(!c)return;
     var p=w.querySelector('.wf-carousel__nav--prev'),x=w.querySelector('.wf-carousel__nav--next');
@@ -161,7 +160,6 @@ const INTERACTION_SCRIPT = `<script>
     if(p)p.addEventListener('click',function(){c.scrollBy({left:-step(),behavior:'smooth'});});
     if(x)x.addEventListener('click',function(){c.scrollBy({left:step(),behavior:'smooth'});});
   });
-  // 탭: 클릭 시 패널 전환
   document.querySelectorAll('.wf-tabs').forEach(function(tabs){
     var btns=tabs.querySelectorAll('.wf-tab');
     var panels=tabs.querySelectorAll('.wf-tabpanel');
@@ -170,7 +168,6 @@ const INTERACTION_SCRIPT = `<script>
       panels.forEach(function(pn){pn.classList.toggle('is-active',pn.dataset.panel===b.dataset.tab);});
     });});
   });
-  // 상세 갤러리: 썸네일/화살표로 메인 이미지 인덱스 전환
   document.querySelectorAll('.wf-gallery').forEach(function(g){
     var idxEl=g.querySelector('.wf-gallery__idx');
     var thumbs=g.querySelectorAll('.wf-gallery__thumbs .wf-box');
@@ -183,11 +180,9 @@ const INTERACTION_SCRIPT = `<script>
     if(x)x.addEventListener('click',function(){set(cur+1);});
     set(0);
   });
-  // FAQ 아코디언: 질문 클릭 시 답변 펼침
   document.querySelectorAll('.wf-faq__q').forEach(function(q){
     q.addEventListener('click',function(){q.parentElement.classList.toggle('is-open');});
   });
-  // 스크롤 리빌(페이드인 / 슬라이드업). 관찰 안 되는 환경 대비 타임아웃 폴백으로 반드시 표시.
   (function(){
     var els=[].slice.call(document.querySelectorAll('.wf-reveal'));
     if(!els.length)return;
@@ -210,6 +205,11 @@ function annoToggle(showNotes) {
 
 function esc(s) {
   return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+// 인라인 CSS의 주석 제거(출력물에 주석 노출 방지)
+function stripCssComments(css) {
+  return String(css).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 // state.sections = [{ comp, opts, comment }]  →  <main> 안쪽 문자열
@@ -244,7 +244,7 @@ export function buildDocument(state, css) {
 <title>[WIREFRAME] ${pageType.toUpperCase()} — ec-wireframe</title>
 <!-- ${fmt(t.meta.docComment, { page: pageType })} -->
 <style>
-${css}
+${stripCssComments(css)}
 </style>
 <noscript><style>.wf-reveal{opacity:1 !important;transform:none !important;}</style></noscript>
 </head>

@@ -38,7 +38,7 @@ function persist() {
 // 외부에서 들어온 state 후보를 검증·정제(신뢰 못 할 데이터 방어)
 function sanitize(cand) {
   if (!cand || typeof cand !== "object") return null;
-  const lang = ["ko", "ja"].includes(cand.lang) ? cand.lang : "ja";
+  const lang = "ja"; // 일본어 고정(언어 토글 제거)
   const device = ["both", "pc", "sp"].includes(cand.device) ? cand.device : "both";
   const pageType = PAGE_TYPES.includes(cand.pageType) ? cand.pageType : "top";
   const showNotes = cand.showNotes !== false;
@@ -175,9 +175,6 @@ function renderTopbar() {
   const devOpts = ["both", "pc", "sp"].map(
     (d) => `<option value="${d}" ${d === state.device ? "selected" : ""}>${t.devices[d]}</option>`
   ).join("");
-  const langOpts = ["ko", "ja"].map(
-    (l) => `<option value="${l}" ${l === state.lang ? "selected" : ""}>${l === "ko" ? "한국어" : "日本語"}</option>`
-  ).join("");
 
   $("#topbar").innerHTML = `
     <button id="btnPanel" class="btn btn-ico" title="${ui().panel}">◀ ${ui().panel}</button>
@@ -187,9 +184,6 @@ function renderTopbar() {
     </label>
     <label class="tb-field">${ui().device}
       <select id="selDevice">${devOpts}</select>
-    </label>
-    <label class="tb-field">${ui().language}
-      <select id="selLang">${langOpts}</select>
     </label>
     ${gallery.length ? `<label class="tb-field">${ui().template}
       <select id="selTpl"><option value="">${ui().templatePick}</option>${gallery
@@ -222,10 +216,6 @@ function renderTopbar() {
     state.device = e.target.value;
     updatePreview();
     $("#stage").className = "stage dev-" + state.device;
-  });
-  $("#selLang").addEventListener("change", (e) => {
-    state.lang = e.target.value;
-    renderAll();
   });
   const selTpl = $("#selTpl");
   if (selTpl) {
