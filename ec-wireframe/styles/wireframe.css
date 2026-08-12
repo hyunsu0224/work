@@ -298,6 +298,18 @@ img{max-width:100%;display:block;}
 .wf-feature,.wf-flowstep,.wf-voice{border:1px solid #eee;padding:16px;}
 .wf-flowstep__no{font-weight:bold;border-bottom:2px solid var(--wf-line);display:inline-block;padding-bottom:2px;}
 
+/* 커스텀 블럭: 컬럼(좌우/다단) 배치 */
+.wf-cust-row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;}
+.wf-cust-col{min-width:0;}
+.wf-cust-col--full{flex:0 0 100%;max-width:100%;}
+.wf-cust-col--half{flex:0 0 calc(50% - 8px);max-width:calc(50% - 8px);}
+.wf-cust-col--third{flex:0 0 calc(33.333% - 11px);max-width:calc(33.333% - 11px);}
+.wf-cust-col--twothird{flex:0 0 calc(66.666% - 8px);max-width:calc(66.666% - 8px);}
+.wf-cust-col--quarter{flex:0 0 calc(25% - 12px);max-width:calc(25% - 12px);}
+@media (max-width:767px){
+  .wf-cust-col{flex-basis:100% !important;max-width:100% !important;}
+}
+
 /* 스크롤 리빌 애니메이션(페이드인 / 슬라이드업) */
 .wf-reveal{opacity:0;transition:opacity .6s ease, transform .6s ease;}
 .wf-reveal--slide{transform:translateY(28px);}

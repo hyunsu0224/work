@@ -585,7 +585,18 @@ ${sl}
       if (!els.length) {
         return section(`      <div class="wf-box" style="min-height:60px;">カスタムブロック（要素を追加してください）</div>`);
       }
-      return section(els.map(renderPrimitive).join("\n"));
+      const W = ["full", "half", "third", "twothird", "quarter"];
+      const cols = els
+        .map((el) => {
+          const w = W.includes(el.width) ? el.width : "full";
+          return `      <div class="wf-cust-col wf-cust-col--${w}">
+${renderPrimitive(el)}
+      </div>`;
+        })
+        .join("\n");
+      return section(`      <div class="wf-cust-row">
+${cols}
+      </div>`);
     },
   },
 };

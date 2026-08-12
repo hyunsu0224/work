@@ -413,6 +413,7 @@ const CUST_TYPES = [
 ];
 const CUST_LABEL = Object.fromEntries(CUST_TYPES);
 const ALIGN_OPTS = [["left", "左"], ["center", "中央"], ["right", "右"]];
+const WIDTH_OPTS = [["full", "全幅"], ["half", "1/2"], ["third", "1/3"], ["twothird", "2/3"], ["quarter", "1/4"]];
 
 function newEl(type) {
   switch (type) {
@@ -442,6 +443,7 @@ function renderElRow(i, ei, el) {
   }
   if (el.type === "spacer") fields += celSelect(`${base}:size`, el.size || "md", [["sm", "小"], ["md", "中"], ["lg", "大"]]);
   if (el.type !== "spacer" && el.type !== "divider") fields += celSelect(`${base}:align`, el.align || "left", ALIGN_OPTS);
+  fields += celSelect(`${base}:width`, el.width || "full", WIDTH_OPTS); // 幅(좌우/다단 배치)
   return `<div class="cel">
             <div class="cel-head"><span class="cel-type">${CUST_LABEL[el.type] || el.type}</span>
               <span class="cel-act"><button class="ico" data-cmove="${base}:-1" title="${ui().moveUp}">▲</button><button class="ico" data-cmove="${base}:1" title="${ui().moveDown}">▼</button><button class="ico ico-del" data-cdel="${base}" title="${ui().remove}">✕</button></span>
