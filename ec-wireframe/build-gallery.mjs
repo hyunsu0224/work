@@ -1,5 +1,5 @@
-// build-gallery.mjs — templates/*.wf.json → src/gallery.js 생성
-// 새 템플릿을 templates/ 에 넣은 뒤 `node build-gallery.mjs` 실행.
+// build-gallery.mjs — templates/*.wf.json → src/gallery.js を生成
+// 新しいテンプレートを templates/ に置いた後 `node build-gallery.mjs` を実行。
 import { readdirSync, readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,15 +13,15 @@ const files = readdirSync(dir)
 
 const gallery = files.map((f) => {
   const raw = JSON.parse(readFileSync(path.join(dir, f), "utf8"));
-  const { name, desc, ...state } = raw; // name/desc=메타, 나머지=상태
+  const { name, desc, ...state } = raw; // name/desc=メタ, 残り=状態
   return { id: f.replace(/\.wf\.json$/, ""), name: name || f, desc: desc || "", state };
 });
 
 const out =
-  "// 자동 생성 파일 — templates/*.wf.json 에서 build-gallery.mjs 로 생성됨. 직접 수정 금지.\n" +
+  "// 自動生成ファイル — templates/*.wf.json から build-gallery.mjs で生成される。直接編集禁止。\n" +
   "export const gallery = " +
   JSON.stringify(gallery, null, 2) +
   ";\n";
 
 writeFileSync(path.join(ROOT, "src", "gallery.js"), out);
-console.log("src/gallery.js 생성:", gallery.length, "개 (" + gallery.map((g) => g.id).join(", ") + ")");
+console.log("src/gallery.js 生成:", gallery.length, "個 (" + gallery.map((g) => g.id).join(", ") + ")");

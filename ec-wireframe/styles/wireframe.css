@@ -1,8 +1,8 @@
 /* =========================================================================
-   wireframe.css  —  로우파이 와이어프레임 공통 스타일
-   - 목적: 색/이미지 없는 "회색 박스" 골격으로 구조·배치만 검증
-   - 대응: PC(>=768px) / SP(<768px) 단일 CSS로 분기
-   - 규칙: 실제 색상·폰트·이미지는 넣지 않는다. 흑백 그레이스케일만.
+   wireframe.css  —  ローファイ ワイヤーフレーム共通スタイル
+   - 目的: 色/画像なしの「グレーボックス」骨格で構造・配置のみを検証
+   - 対応: PC(>=768px) / SP(<768px) 単一CSSで分岐
+   - ルール: 実際の色・フォント・画像は入れない。白黒グレースケールのみ。
    ========================================================================= */
 
 :root{
@@ -29,7 +29,7 @@ a{color:inherit;text-decoration:none;}
 ul{list-style:none;margin:0;padding:0;}
 img{max-width:100%;display:block;}
 
-/* ---- 레이아웃 컨테이너 ---- */
+/* ---- レイアウトコンテナ ---- */
 .wf-container{max-width:var(--wf-maxw);margin:0 auto;padding:0 var(--wf-gap);}
 .wf-section{padding:32px 0;border-bottom:1px dashed #ccc;}
 .wf-section__ttl{
@@ -37,7 +37,7 @@ img{max-width:100%;display:block;}
   padding-left:10px;border-left:4px solid var(--wf-line);
 }
 
-/* ---- 플레이스홀더 박스 ---- */
+/* ---- プレースホルダーボックス ---- */
 .wf-box{
   background:var(--wf-box);
   border:1px solid var(--wf-line);
@@ -58,14 +58,14 @@ img{max-width:100%;display:block;}
 .wf-box--hero{min-height:320px;}
 .wf-box--sq{aspect-ratio:1/1;min-height:0;}
 
-/* ---- 주석 라벨 ---- */
+/* ---- 注釈ラベル ---- */
 .wf-note{
   display:inline-block;font-size:11px;color:var(--wf-note);
   border:1px dashed #999;border-radius:2px;padding:1px 6px;margin:4px 0;background:#fafafa;
 }
 .wf-note::before{content:"\2316 ";}
 
-/* ---- 그리드 유틸 ---- */
+/* ---- グリッドユーティリティ ---- */
 .wf-grid{display:grid;gap:var(--wf-gap);}
 .wf-grid--2{grid-template-columns:repeat(2,1fr);}
 .wf-grid--3{grid-template-columns:repeat(3,1fr);}
@@ -92,7 +92,7 @@ img{max-width:100%;display:block;}
 .wf-badge{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;
   background:var(--wf-line);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 
-/* ---- 메가메뉴 ---- */
+/* ---- メガメニュー ---- */
 .wf-mega{
   display:none;position:absolute;left:0;top:100%;width:640px;
   background:#fff;border:1px solid var(--wf-line);padding:16px;z-index:120;
@@ -101,12 +101,12 @@ img{max-width:100%;display:block;}
 .wf-gnav__item:hover .wf-mega{display:block;}
 .wf-mega__close{display:none;}
 
-/* ---- 햄버거(SP) ---- */
+/* ---- ハンバーガー(SP) ---- */
 .wf-hamburger{display:none;width:40px;height:40px;border:1px solid var(--wf-line);
   flex-direction:column;gap:5px;align-items:center;justify-content:center;cursor:pointer;}
 .wf-hamburger span{display:block;width:22px;height:2px;background:var(--wf-line);}
 
-/* ---- SP 드로어 ---- */
+/* ---- SP ドロワー ---- */
 .wf-drawer{
   position:fixed;top:0;left:-84%;width:84%;height:100vh;background:#fff;
   border-right:2px solid var(--wf-line);z-index:200;overflow-y:auto;
@@ -140,7 +140,7 @@ img{max-width:100%;display:block;}
 .wf-card__price--sale{color:#333;}
 .wf-card__price del{color:var(--wf-muted);font-weight:normal;margin-right:6px;}
 
-/* ---- 캐러셀 ---- */
+/* ---- カルーセル ---- */
 .wf-carousel{display:flex;gap:var(--wf-gap);overflow-x:auto;padding-bottom:8px;}
 .wf-carousel > .wf-card{flex:0 0 200px;}
 
@@ -241,7 +241,7 @@ img{max-width:100%;display:block;}
 .wf-slider__dots i{width:9px;height:9px;border-radius:50%;border:1px solid var(--wf-line);background:#fff;cursor:pointer;}
 .wf-slider__dots i.is-active{background:var(--wf-line);}
 
-/* ---- 상품 캐러셀: 좌우 화살표로 스크롤(슬라이드) ---- */
+/* ---- 商品カルーセル: 左右の矢印でスクロール(スライド) ---- */
 .wf-carousel-wrap{position:relative;}
 .wf-carousel__nav{position:absolute;top:calc(50% - 14px);transform:translateY(-50%);
   width:34px;height:34px;border:1px solid var(--wf-line);background:#fff;cursor:pointer;
@@ -249,14 +249,14 @@ img{max-width:100%;display:block;}
 .wf-carousel__nav--prev{left:-8px;}
 .wf-carousel__nav--next{right:-8px;}
 
-/* ---- 탭: 클릭 시 패널 전환(실제 동작) ---- */
+/* ---- タブ: クリック時にパネル切替(実際に動作) ---- */
 .wf-tabs__head{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 .wf-tab{border:1px solid var(--wf-line);background:#fff;padding:6px 14px;font-size:12px;cursor:pointer;}
 .wf-tab.is-active{background:var(--wf-line);color:#fff;}
 .wf-tabpanel{display:none;}
 .wf-tabpanel.is-active{display:block;}
 
-/* ---- 갤러리(상세): 썸네일/화살표로 메인 이미지 전환 ---- */
+/* ---- ギャラリー(詳細): サムネイル/矢印でメイン画像を切替 ---- */
 .wf-gallery__stage{position:relative;}
 .wf-gallery__nav{position:absolute;top:50%;transform:translateY(-50%);
   width:36px;height:36px;border:1px solid var(--wf-line);background:#fff;cursor:pointer;
@@ -268,9 +268,9 @@ img{max-width:100%;display:block;}
 .wf-gallery__thumbs .wf-box.is-active{outline:2px solid var(--wf-line);outline-offset:1px;}
 
 /* =========================================================================
-   LP 리치 컴포넌트
+   LP リッチコンポーネント
    ========================================================================= */
-/* 미디어+텍스트(좌우 교차) */
+/* メディア+テキスト(左右交互) */
 .wf-mediatext{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;}
 .wf-mediatext__media{order:1;}
 .wf-mediatext__body{order:2;}
@@ -282,11 +282,11 @@ img{max-width:100%;display:block;}
 .wf-btn{display:inline-block;border:1px solid var(--wf-line);padding:10px 24px;font-size:13px;background:#fff;}
 .wf-btn--lg{padding:14px 40px;font-size:15px;font-weight:bold;}
 
-/* CTA 밴드 */
+/* CTA バンド */
 .wf-ctaband{border:2px solid var(--wf-line);background:#f3f3f3;text-align:center;padding:32px 16px;}
 .wf-ctaband__h{font-size:20px;font-weight:bold;margin-bottom:16px;}
 
-/* FAQ 아코디언 */
+/* FAQ アコーディオン */
 .wf-faq__item{border:1px solid #ccc;margin-bottom:8px;}
 .wf-faq__q{padding:14px 40px 14px 16px;cursor:pointer;font-weight:bold;position:relative;}
 .wf-faq__q::after{content:"＋";position:absolute;right:16px;top:14px;}
@@ -294,11 +294,11 @@ img{max-width:100%;display:block;}
 .wf-faq__a{display:none;padding:0 16px 14px;color:#555;font-size:13px;line-height:1.7;}
 .wf-faq__item.is-open .wf-faq__a{display:block;}
 
-/* 특징 / STEP / VOICE 카드 */
+/* 特徴 / STEP / VOICE カード */
 .wf-feature,.wf-flowstep,.wf-voice{border:1px solid #eee;padding:16px;}
 .wf-flowstep__no{font-weight:bold;border-bottom:2px solid var(--wf-line);display:inline-block;padding-bottom:2px;}
 
-/* 커스텀 블럭: 컬럼(좌우/다단) 배치 */
+/* カスタムブロック: カラム(左右/多段)配置 */
 .wf-cust-row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;}
 .wf-cust-col{min-width:0;}
 .wf-cust-col--full{flex:0 0 100%;max-width:100%;}
@@ -310,13 +310,13 @@ img{max-width:100%;display:block;}
   .wf-cust-col{flex-basis:100% !important;max-width:100% !important;}
 }
 
-/* 스크롤 리빌 애니메이션(페이드인 / 슬라이드업) */
+/* スクロールリビールアニメーション(フェードイン / スライドアップ) */
 .wf-reveal{opacity:0;transition:opacity .6s ease, transform .6s ease;}
 .wf-reveal--slide{transform:translateY(28px);}
 .wf-reveal.is-in{opacity:1;transform:none;}
 
 /* =========================================================================
-   ANNOTATION  —  주석/코멘트 + 표시 토글
+   ANNOTATION  —  注釈/コメント + 表示トグル
    ========================================================================= */
 .wf-comment{background:#fffbe6;border:1px solid #e6d27a;border-left:4px solid #d4a017;
   padding:8px 12px;margin:0 0 12px;font-size:12px;color:#6b5900;border-radius:2px;white-space:pre-wrap;}
@@ -325,7 +325,7 @@ img{max-width:100%;display:block;}
 .wf-anno-toggle{position:fixed;top:8px;right:10px;z-index:300;font-size:11px;
   border:1px solid var(--wf-line);background:#fff;padding:5px 10px;cursor:pointer;border-radius:3px;opacity:.9;}
 
-/* ---- 공통 헬퍼 ---- */
+/* ---- 共通ヘルパー ---- */
 .wf-more{border:1px solid var(--wf-line);max-width:200px;margin:16px auto 0;min-height:0;padding:10px;text-align:center;}
 .wf-rank-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
 .wf-rank-tabs span{border:1px solid #333;padding:6px 12px;font-size:12px;}

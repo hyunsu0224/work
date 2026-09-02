@@ -1,5 +1,5 @@
-// icons.js — 컴포넌트별 미니 도식 아이콘(인라인 SVG)
-// 각 아이콘은 해당 블록의 레이아웃을 회색 와이어프레임 톤으로 축약 표현. viewBox 28x20.
+// icons.js — コンポーネントごとのミニ図式アイコン(インラインSVG)
+// 各アイコンは該当ブロックのレイアウトをグレーのワイヤーフレームトーンで簡略表現。viewBox 28x20。
 
 const svg = (inner) => `<svg viewBox="0 0 28 20" class="cicon" aria-hidden="true">${inner}</svg>`;
 const b = (x, y, w, h, f = "#d8d8d8") => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx=".5" fill="${f}" stroke="#666" stroke-width=".7"/>`;
@@ -40,7 +40,7 @@ export const icons = {
   "mypage-overview": svg(c(6, 10, 4) + l(12, 7, 12) + l(12, 12, 8)),
   "mypage-menu": svg(rep(3, (i) => b(3 + i * 8, 4, 6, 5)) + rep(3, (i) => b(3 + i * 8, 11, 6, 5))),
 
-  // LP / 자유
+  // LP / 自由
   "free-banner": svg(im(2, 3, 24, 14)),
   "free-text": svg(b(2, 4, 11, 3, "#c2c2c2") + l(2, 10, 22) + l(2, 14, 18)),
   "media-text": svg(im(2, 4, 12, 12) + l(16, 6, 9) + l(16, 9, 7) + l(16, 12, 9) + b(19, 15, 6, 2.4, "#666")),
@@ -52,7 +52,7 @@ export const icons = {
   custom: svg(l(3, 3, 14) + im(3, 7, 11, 6) + b(3, 15, 9, 3, "#666") + `<path d="M20 3l4 4-4 4" stroke="#999" stroke-width=".7" fill="none"/>`),
 };
 
-// 기본(미정의) 아이콘
+// デフォルト(未定義)アイコン
 const fallback = svg(b(3, 4, 22, 12) + l(6, 8, 12) + l(6, 12, 8));
 
 export function iconFor(id) {

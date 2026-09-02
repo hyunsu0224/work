@@ -1,22 +1,22 @@
 /* =========================================================================
-   wireframe.css  —  로우파이 와이어프레임 공통 스타일
-   - 목적: 색/이미지 없는 "회색 박스" 골격으로 구조·배치만 검증
-   - 대응: PC(>=768px) / SP(<768px) 단일 CSS로 분기
-   - 규칙: 실제 색상·폰트·이미지는 넣지 않는다. 흑백 그레이스케일만.
+   wireframe.css  —  ローファイ ワイヤーフレーム共通スタイル
+   - 目的: 色/画像なしの「グレーボックス」骨格で構造・配置のみを検証
+   - 対応: PC(>=768px) / SP(<768px) 単一CSSで分岐
+   - ルール: 実際の色・フォント・画像は入れない。白黒グレースケールのみ。
    ========================================================================= */
 
 :root{
-  --wf-line:#333;          /* 테두리 */
-  --wf-box:#e8e8e8;        /* 플레이스홀더 박스 면 */
-  --wf-box-2:#d8d8d8;      /* 강조 박스 면 */
-  --wf-ink:#333;           /* 텍스트/라벨 */
-  --wf-muted:#888;         /* 보조 라벨 */
+  --wf-line:#333;          /* 枠線 */
+  --wf-box:#e8e8e8;        /* プレースホルダーボックスの面 */
+  --wf-box-2:#d8d8d8;      /* 強調ボックスの面 */
+  --wf-ink:#333;           /* テキスト/ラベル */
+  --wf-muted:#888;         /* 補助ラベル */
   --wf-bg:#fff;
-  --wf-note:#555;          /* 주석(회색박스 위 설명) */
+  --wf-note:#555;          /* 注釈(グレーボックス上の説明) */
   --wf-gap:16px;
   --wf-radius:2px;
-  --wf-bp:768px;           /* 브레이크포인트: 여기 미만이 SP */
-  --wf-maxw:1200px;        /* ecbeing PC 기본 폭(meta-viewport width=1200 기준) */
+  --wf-bp:768px;           /* ブレイクポイント: これ未満がSP */
+  --wf-maxw:1200px;        /* ecbeing PC 基本幅(meta-viewport width=1200 基準) */
 }
 
 *{box-sizing:border-box;}
@@ -29,7 +29,7 @@ a{color:inherit;text-decoration:none;}
 ul{list-style:none;margin:0;padding:0;}
 img{max-width:100%;display:block;}
 
-/* ---- 레이아웃 컨테이너 ---- */
+/* ---- レイアウトコンテナ ---- */
 .wf-container{max-width:var(--wf-maxw);margin:0 auto;padding:0 var(--wf-gap);}
 .wf-section{padding:32px 0;border-bottom:1px dashed #ccc;}
 .wf-section__ttl{
@@ -37,7 +37,7 @@ img{max-width:100%;display:block;}
   padding-left:10px;border-left:4px solid var(--wf-line);
 }
 
-/* ---- 플레이스홀더 박스: 모든 "이미지/미정 콘텐츠"는 이걸로 ---- */
+/* ---- プレースホルダーボックス: すべての「画像/未定コンテンツ」はこれで ---- */
 .wf-box{
   background:var(--wf-box);
   border:1px solid var(--wf-line);
@@ -47,7 +47,7 @@ img{max-width:100%;display:block;}
   min-height:60px;padding:8px;
   position:relative;
 }
-/* 대각선(이미지 자리 표시 관례) */
+/* 斜線(画像プレースホルダーの慣例) */
 .wf-box--img{
   background:
     linear-gradient(45deg,transparent 49%,#bbb 49%,#bbb 51%,transparent 51%),
@@ -59,14 +59,14 @@ img{max-width:100%;display:block;}
 .wf-box--hero{min-height:320px;}
 .wf-box--sq{aspect-ratio:1/1;min-height:0;}
 
-/* ---- 주석 라벨: 요소의 동작/옵션을 회색박스 위에 명시 ---- */
+/* ---- 注釈ラベル: 要素の動作/オプションをグレーボックス上に明示 ---- */
 .wf-note{
   display:inline-block;font-size:11px;color:var(--wf-note);
   border:1px dashed #999;border-radius:2px;padding:1px 6px;margin:4px 0;background:#fafafa;
 }
 .wf-note::before{content:"⌖ ";}
 
-/* ---- 그리드 유틸 ---- */
+/* ---- グリッドユーティリティ ---- */
 .wf-grid{display:grid;gap:var(--wf-gap);}
 .wf-grid--2{grid-template-columns:repeat(2,1fr);}
 .wf-grid--3{grid-template-columns:repeat(3,1fr);}
@@ -76,7 +76,7 @@ img{max-width:100%;display:block;}
 .wf-flex{display:flex;gap:var(--wf-gap);align-items:center;}
 
 /* =========================================================================
-   HEADER  —  ecbeing 공통 헤더 골격
+   HEADER  —  ecbeing 共通ヘッダー骨格
    ========================================================================= */
 .wf-header{border-bottom:2px solid var(--wf-line);position:sticky;top:0;background:#fff;z-index:100;}
 .wf-header__utility{border-bottom:1px solid #ddd;font-size:12px;}
@@ -93,21 +93,21 @@ img{max-width:100%;display:block;}
 .wf-badge{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;border-radius:8px;
   background:var(--wf-line);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 
-/* ---- 메가메뉴(PC hover 시 아코디언 펼침) ---- */
+/* ---- メガメニュー(PC hover時にアコーディオン展開) ---- */
 .wf-mega{
   display:none;position:absolute;left:0;top:100%;width:640px;
   background:#fff;border:1px solid var(--wf-line);padding:16px;z-index:120;
   box-shadow:0 6px 16px rgba(0,0,0,.12);
 }
-.wf-gnav__item:hover .wf-mega{display:block;}   /* PC: hover 전개 */
-.wf-mega__close{display:none;}                   /* PC에선 close 불필요 */
+.wf-gnav__item:hover .wf-mega{display:block;}   /* PC: hoverで展開 */
+.wf-mega__close{display:none;}                   /* PCではcloseは不要 */
 
-/* ---- 햄버거(SP 전용) ---- */
+/* ---- ハンバーガー(SP専用) ---- */
 .wf-hamburger{display:none;width:40px;height:40px;border:1px solid var(--wf-line);
   flex-direction:column;gap:5px;align-items:center;justify-content:center;cursor:pointer;}
 .wf-hamburger span{display:block;width:22px;height:2px;background:var(--wf-line);}
 
-/* ---- SP 드로어(옆에서 슬라이드 인) ---- */
+/* ---- SP ドロワー(横からスライドイン) ---- */
 .wf-drawer{
   position:fixed;top:0;left:-84%;width:84%;height:100vh;background:#fff;
   border-right:2px solid var(--wf-line);z-index:200;overflow-y:auto;
@@ -127,7 +127,7 @@ img{max-width:100%;display:block;}
 .wf-drawer__panel li{padding:8px 0;border-bottom:1px dashed #ccc;}
 
 /* =========================================================================
-   PRODUCT CARD  —  상품 카드(캐러셀/그리드 공통)
+   PRODUCT CARD  —  商品カード(カルーセル/グリッド共通)
    ========================================================================= */
 .wf-card{border:1px solid #ccc;padding:8px;}
 .wf-card__thumb{position:relative;margin-bottom:8px;}
@@ -141,7 +141,7 @@ img{max-width:100%;display:block;}
 .wf-card__price--sale{color:#333;}
 .wf-card__price del{color:var(--wf-muted);font-weight:normal;margin-right:6px;}
 
-/* ---- 캐러셀(가로 스크롤 표현) ---- */
+/* ---- カルーセル(横スクロール表現) ---- */
 .wf-carousel{display:flex;gap:var(--wf-gap);overflow-x:auto;padding-bottom:8px;}
 .wf-carousel > .wf-card{flex:0 0 200px;}
 
@@ -163,7 +163,7 @@ img{max-width:100%;display:block;}
   border:1px solid #ccc;padding:8px 12px;margin-bottom:16px;}
 
 /* =========================================================================
-   DETAIL  —  상품상세 전용
+   DETAIL  —  商品詳細専用
    ========================================================================= */
 .wf-detail{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
 .wf-gallery__main{margin-bottom:12px;}
@@ -192,16 +192,16 @@ img{max-width:100%;display:block;}
 .wf-cookiebar__btn{border:1px solid var(--wf-line);padding:6px 20px;}
 
 /* =========================================================================
-   RESPONSIVE  —  SP(<768px) 분기
+   RESPONSIVE  —  SP(<768px) 分岐
    ========================================================================= */
 @media (max-width:767px){
   .wf-hamburger{display:flex;}
-  .wf-gnav,.wf-header__utility{display:none;}   /* PC 글로벌내비/유틸 숨김 → 드로어로 이동 */
+  .wf-gnav,.wf-header__utility{display:none;}   /* PCグローバルナビ/ユーティリティを非表示 → ドロワーへ移動 */
   .wf-header__main{gap:12px;justify-content:space-between;}
   .wf-logo{width:120px;height:32px;}
   .wf-grid--3,.wf-grid--4,.wf-grid--5,.wf-grid--6{grid-template-columns:repeat(2,1fr);}
   .wf-footer__cols{grid-template-columns:1fr 1fr;}
-  .wf-detail{grid-template-columns:1fr;}          /* 상세: 1단 세로 스택 */
+  .wf-detail{grid-template-columns:1fr;}          /* 詳細: 1段の縦スタック */
   .wf-box--hero{min-height:180px;}
   .wf-sortbar{flex-direction:column;gap:8px;align-items:stretch;}
 }

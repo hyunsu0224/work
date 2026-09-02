@@ -1,5 +1,5 @@
-# 이 파일을 .wf-pass 로 복사한 뒤, 아래 한 줄을 원하는 비밀번호로 바꾸세요.
-# (.wf-pass 는 .gitignore 로 커밋되지 않습니다. 이 예시 파일에는 실제 비번을 적지 마세요.)
+# このファイルを .wf-pass にコピーした後、下の1行を任意のパスワードに変更してください。
+# (.wf-pass は .gitignore によりコミットされません。この例示ファイルには実際のパスワードを書かないでください。)
 #   PowerShell:  Copy-Item .wf-pass.example .wf-pass
-# 또는 환경변수로도 지정 가능:  $env:WF_PASSWORD="원하는비번"; node server.js 8000
+# または環境変数でも指定可能:  $env:WF_PASSWORD="任意のパスワード"; node server.js 8000
 change-this-password
