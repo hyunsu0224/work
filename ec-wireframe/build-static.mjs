@@ -2,7 +2,7 @@
 // パスワードを入力すると復号されて開く。なければソースは暗号文のみ露出(静的ホスティングで可能な最善策)。
 // 使用: node build-static.mjs            (.wf-pass またはデフォルト値を使用)
 //       WF_PASSWORD=xxx node build-static.mjs
-import { readFileSync, writeFileSync, mkdirSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "fs";
 import { webcrypto as wc } from "node:crypto";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -31,14 +31,39 @@ let appJs = strip(rd("src/app.js"));
 // ランタイムの fetch(wireframe.css) → インライン定数に置換(静的な単一ファイルのため fetch 不可)
 appJs = appJs.replace(/CSS\s*=\s*await\s*fetch\([^)]*\)\.then\([^;]*\);/, "CSS = WF_CSS;");
 
+// バンドル順は依存関係の順。app.js は最後(他をすべて参照するため)。
+// ※ src/ に新しいモジュールを足したら MODULE_ORDER にも追加すること。
+//   漏れると「呼び出しはあるのに定義が無い」= 公開ページだけ ReferenceError になる。
+//   下のチェックで検出してビルドを止める。
+const MODULE_ORDER = [
+  "src/i18n.js",
+  "src/templates.js",
+  "src/gallery.js",
+  "src/icons.js",
+  "src/catalog.js",
+  "src/sanitize.js",
+  "src/share.js",
+  "src/zip.js",
+  "src/export.js",
+];
+
+// src/ にあるのに MODULE_ORDER に無いファイルを検出(バンドル漏れ防止)
+{
+  const onDisk = readdirSync(path.join(ROOT, "src"))
+    .filter((f) => f.endsWith(".js"))
+    .map((f) => "src/" + f)
+    .filter((f) => f !== "src/app.js"); // app.js は最後に別途連結する
+  const missing = onDisk.filter((f) => !MODULE_ORDER.includes(f));
+  if (missing.length) {
+    console.error("バンドル対象から漏れているモジュール:", missing.join(", "));
+    console.error("build-static.mjs の MODULE_ORDER に追加してください。");
+    process.exit(1);
+  }
+}
+
 const bundleJs = [
   `const WF_CSS = ${JSON.stringify(wireframeCss)};`,
-  strip(rd("src/i18n.js")),
-  strip(rd("src/templates.js")),
-  strip(rd("src/gallery.js")),
-  strip(rd("src/icons.js")),
-  strip(rd("src/catalog.js")),
-  strip(rd("src/export.js")),
+  ...MODULE_ORDER.map((f) => strip(rd(f))),
   appJs,
 ].join("\n");
 
