@@ -1,62 +1,12 @@
-// i18n.js — 언어팩 (ko / ja)
-// - ui.*   : 빌더 UI 크롬 라벨
-// - note.* : 출력물의 wf-note 주석 텍스트  (KR/JP 버전의 실질 차이)
-// - meta.* : 출력 문서 head 코멘트 / 프리뷰 바 문구
-// EC 콘텐츠 라벨(カテゴリから探す 등)은 양 언어 공통으로 일본어 유지(일본 EC 사이트 대상).
+// i18n.js — 言語パック (ja)
+// - ui.*   : ビルダー UI クロムのラベル
+// - note.* : 出力物の wf-note 注記テキスト
+// - meta.* : 出力ドキュメントの head コメント / プレビューバー文言
+// EC コンテンツのラベル(カテゴリから探す 等)は日本語で保持(日本の EC サイト対象)。
 
-export const LANGS = ["ko", "ja"];
+export const LANGS = ["ja"];
 
 export const i18n = {
-  ko: {
-    ui: {
-      appTitle: "EC 와이어프레임 빌더",
-      pageType: "페이지 유형",
-      device: "표시 대상",
-      language: "언어",
-      template: "템플릿",
-      templatePick: "📁 불러오기…",
-      templateWarn: "현재 작업 내용이 사라집니다. 이 템플릿을 불러올까요?",
-      addSection: "＋ 섹션 추가",
-      sections: "섹션 구성",
-      palette: "컴포넌트",
-      preview: "미리보기",
-      download: "⬇ HTML 다운로드",
-      openTab: "🔍 전체보기",
-      copyHtml: "⧉ HTML 복사",
-      copied: "복사됨!",
-      request: "💬 요청",
-      guide: "❓ 가이드",
-      save: "💾 구성 저장",
-      load: "📂 불러오기",
-      undo: "되돌리기",
-      redo: "다시 실행",
-      reset: "초기화",
-      empty: "왼쪽에서 섹션을 추가하세요.",
-      options: "옵션",
-      moveUp: "위로",
-      moveDown: "아래로",
-      duplicate: "복제",
-      remove: "삭제",
-      notesToggle: "주석",
-      panel: "편집",
-      commentPh: "이 섹션 코멘트 / 스펙노트…",
-      insertHint: "▸ 선택됨 · 새 컴포넌트는 이 아래에 삽입됩니다 (다시 클릭=해제)",
-      dragHint: "⠿ 드래그로 순서 변경",
-      fixedNote: "header · footer · cookie-bar 는 전 페이지 공통으로 자동 포함됩니다.",
-      autosave: "자동 저장됨 · 창을 닫아도 유지됩니다",
-      confirmReset: "현재 구성을 페이지 기본 템플릿으로 되돌릴까요? (자동저장도 초기화)",
-      loadFailed: "구성 파일을 읽지 못했습니다.",
-    },
-    pageTypes: {
-      top: "TOP", list: "商品一覧 (LIST)", detail: "商品詳細 (DETAIL)",
-      cart: "CART", mypage: "MYPAGE", lp: "LP / 特集",
-    },
-    devices: { both: "PC + SP", pc: "PC", sp: "SP" },
-    meta: {
-      previewBar: "WIREFRAME PREVIEW ／ page_type: {page} ／ 로우파이 · SP+PC(768px) · 브라우저 폭을 줄이면 SP 레이아웃으로 전환됩니다",
-      docComment: "로우파이 와이어프레임 — {page} — 색/이미지 없는 회색박스 골격",
-    },
-  },
   ja: {
     ui: {
       appTitle: "EC ワイヤーフレーム ビルダー",
@@ -71,6 +21,16 @@ export const i18n = {
       palette: "コンポーネント",
       preview: "プレビュー",
       download: "⬇ HTML ダウンロード",
+      downloadZip: "⬇ 分割ZIP (html/css/js)",
+      zipDone: "index.html / style.css / script.js を書き出しました",
+      downloadProject: "📦 プロジェクトZIP (全ページ)",
+      projectDone: "{count}ページを書き出しました",
+      projectEmpty: "書き出せるページがありません。",
+      shareLink: "🔗 共有リンクをコピー",
+      shareCopied: "共有リンクをコピーしました(URLに構成が入っています)",
+      shareFailed: "共有リンクを作成できませんでした。",
+      shareLoaded: "共有リンクから構成を読み込みました",
+      shareConfirm: "共有リンクの構成を読み込みますか？現在の作業内容は失われます。",
       openTab: "🔍 全体表示",
       copyHtml: "⧉ HTMLコピー",
       copied: "コピーしました!",
@@ -94,8 +54,29 @@ export const i18n = {
       dragHint: "⠿ ドラッグで並び替え",
       fixedNote: "header・footer・cookie-bar は全ページ共通で自動的に含まれます。",
       autosave: "自動保存済み · ウィンドウを閉じても保持されます",
+      autosaveShort: "自動保存",
       confirmReset: "現在の構成をページ標準テンプレートに戻しますか？（自動保存もリセット）",
       loadFailed: "構成ファイルを読み込めませんでした。",
+      searchPh: "🔍 コンポーネントを検索…",
+      searchEmpty: "該当するコンポーネントがありません。",
+      grpPage: "このページの標準",
+      grpCommon: "共通",
+      grpRich: "LP・特集",
+      added: "「{name}」を追加しました",
+      more: "その他の操作",
+      addNow: "＋ そのまま追加",
+      addEdit: "✎ 編集して追加",
+      modalTitle: "{name} を追加",
+      modalOptions: "オプション",
+      modalPos: "挿入位置",
+      modalPosTop: "先頭 (1番の前)",
+      modalPosAfter: "{n}. {name} の後",
+      modalPosEnd: "末尾に追加",
+      modalPosAfterEnd: "{n}. {name} の後（末尾）",
+      modalCurrent: "現在の構成 ({count}件)",
+      modalCancel: "キャンセル",
+      modalConfirm: "この内容で追加",
+      modalNoOpts: "このコンポーネントに設定できるオプションはありません。",
     },
     pageTypes: {
       top: "TOP", list: "商品一覧 (LIST)", detail: "商品詳細 (DETAIL)",
@@ -109,42 +90,9 @@ export const i18n = {
   },
 };
 
-// 컴포넌트 라벨(팔레트/섹션 리스트) 및 wf-note 텍스트.
-// note 값은 함수(opts)로 두어 옵션 반영(예: 슬라이드 매수)이 가능.
+// コンポーネントラベル(パレット/セクションリスト)および wf-note テキスト。
+// note 値は関数(opts)にしてオプション反映(例: スライド枚数)を可能にする。
 export const strings = {
-  ko: {
-    comp: {
-      hero: "히어로 슬라이더", promo: "프로모 배너", "category-grid": "카테고리 그리드",
-      topics: "특집 배너군", ranking: "랭킹 탭", "carousel": "상품 캐러셀",
-      info: "인포·뉴스 리스트", breadcrumb: "빵부스러기", "page-title": "카테고리 타이틀",
-      sortbar: "정렬 바", "list-body": "필터＋상품그리드", pagination: "페이지네이션",
-      "detail-main": "상세 메인(갤러리＋구매)", "detail-desc": "상품 설명", "review": "리뷰",
-      related: "관련 상품", "cart-steps": "스텝 인디케이터", "cart-items": "카트 아이템",
-      "cart-summary": "금액 요약", "mypage-overview": "회원 개요", "mypage-menu": "메뉴 그리드",
-      "free-banner": "자유 배너", "free-text": "자유 텍스트 블록",
-      "media-text": "미디어+텍스트", "feature-cols": "특징 컬럼", "cta-band": "CTA 밴드",
-      "faq": "FAQ 아코디언", "steps": "이용 흐름 STEP", "voice": "고객의 소리",
-      "custom": "커스텀 블럭",
-    },
-    note: {
-      hero: (o) => `자동슬라이드 ${o.slides || 5}매${o.autoplay ? "" : "(자동재생 off)"}${o.arrows ? " / 좌우화살표" : ""}${o.indicator ? " · 인디케이터" : ""} / 스와이프(SP)`,
-      "category-grid": (o) => `타일 링크 → /shop/c/c{code}/ · PC ${o.cols || 5}열 / SP 2열`,
-      topics: (o) => `배너 타일 → /shop/e/e{code}/ · PC ${o.cols || 4}열 / SP 2열`,
-      ranking: () => "탭 클릭 → 해당 캐러셀 전환 / 순위뱃지 ①②③",
-      carousel: (o) => `${o.badge ? "NEW뱃지 on / " : ""}${o.sale ? "SALE(정가 취소선+OFF%) / " : ""}Quick view hover${o.more ? " / もっと見る" : ""}`,
-      breadcrumb: () => "계층 위치 · 홈 > 카테고리 > 현재",
-      sortbar: () => "정렬(신착/인기/가격) + 표시건수 + 뷰전환(그리드/리스트)",
-      "list-body": (o) => `PC=좌측 필터 사이드 / SP=상단 絞り込み 드로어 · 상품 PC ${o.cols || 4}열 / SP 2열`,
-      pagination: () => "번호형 / もっと見る(무한로드) 옵션",
-      "detail-main": (o) => `갤러리: 썸네일·화살표로 메인 전환 / SP=1단 세로 스택${o.stickyCta ? " · 하단 고정 cta" : ""} / variant=${o.variant || "사이즈·색"}`,
-      review: () => "평점(★) + 리뷰 리스트 + 더보기",
-      related: () => "이 상품을 본 사람은 / 관련상품 캐러셀",
-      "cart-steps": () => "カート→情報入力→確認→完了",
-      "mypage-menu": () => "注文履歴 / お気に入り / 会員情報 / 住所帳 …",
-      "media-text": (o) => `이미지↔텍스트 교차(${o.imageSide === "left" ? "이미지 왼쪽" : "이미지 오른쪽"}) / CTA→상세페이지${o.slides > 1 ? " / 이미지 슬라이드" : ""}${o.anim && o.anim !== "none" ? " / " + (o.anim === "fade" ? "페이드인" : "슬라이드업") : ""}`,
-      "faq": () => "질문 클릭 → 아코디언으로 펼쳐짐",
-    },
-  },
   ja: {
     comp: {
       hero: "ヒーロースライダー", promo: "プロモバナー", "category-grid": "カテゴリグリッド",
@@ -180,7 +128,7 @@ export const strings = {
   },
 };
 
-// {token} 치환 헬퍼
+// {token} 置換ヘルパー
 export function fmt(tpl, vars = {}) {
   return String(tpl).replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : `{${k}}`));
 }

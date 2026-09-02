@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 履歴で docs の再ビルド漏れを判定するため
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 依存パッケージなしのプロジェクトなので install は不要
+      - name: テスト
+        working-directory: ec-wireframe
+        run: node --test test/
+
+      # 公開ページ docs/index.html は src/·styles/ からのビルド成果物。
+      # 「src を直したのに再ビルドを忘れた」状態を履歴から検出する。
+      - name: docs/ の再ビルド漏れを検出
+        run: |
+          src_at=$(git log -1 --format=%ct -- ec-wireframe/src ec-wireframe/styles ec-wireframe/index.html ec-wireframe/build-static.mjs)
+          docs_at=$(git log -1 --format=%ct -- docs/index.html)
+          if [ -z "$docs_at" ]; then
+            echo "::error::docs/index.html がコミットされていません"
+            exit 1
+          fi
+          if [ -z "$src_at" ]; then
+            echo "src/ に該当コミットがありません。判定をスキップします。"
+            exit 0
+          fi
+          echo "src  last commit: $(date -u -d @${src_at} '+%F %T') UTC"
+          echo "docs last commit: $(date -u -d @${docs_at} '+%F %T') UTC"
+          if [ "$src_at" -gt "$docs_at" ]; then
+            echo "::error::src/ の変更が公開ページに反映されていません。ec-wireframe で 'node build-static.mjs' を実行し docs/ をコミットしてください。"
+            exit 1
+          fi
+          echo "OK: docs/ は最新の src/ から再ビルド済みです"

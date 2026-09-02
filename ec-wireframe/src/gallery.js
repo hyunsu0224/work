@@ -1,4 +1,4 @@
-// 자동 생성 파일 — templates/*.wf.json 에서 build-gallery.mjs 로 생성됨. 직접 수정 금지.
+// 自動生成ファイル — templates/*.wf.json から build-gallery.mjs で生成される。直接編集禁止。
 export const gallery = [
   {
     "id": "sample-lp-campaign",

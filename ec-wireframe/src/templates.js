@@ -1,6 +1,6 @@
-// templates.js — 페이지 유형별 표준 섹션 구성 (page-templates.md 기반)
-// 각 항목: { comp: 컴포넌트id, opts?: 초기옵션 }
-// header / footer / cookie-bar 는 export.js에서 전 페이지 공통으로 자동 삽입.
+// templates.js — ページ種別ごとの標準セクション構成 (page-templates.md ベース)
+// 各項目: { comp: コンポーネントid, opts?: 初期オプション }
+// header / footer / cookie-bar は export.js で全ページ共通として自動挿入。
 
 export const PAGE_TYPES = ["top", "list", "detail", "cart", "mypage", "lp"];
 
@@ -50,11 +50,11 @@ export const templates = {
   ],
 };
 
-// 각 페이지 유형에서 팔레트에 노출할 추가 가능한 컴포넌트(순서=표시순).
-// 공통 컴포넌트는 모든 페이지에서 추가 가능.
-const COMMON = ["custom", "carousel", "topics", "category-grid", "info", "free-banner", "free-text"];
-// LP/특집형 리치 컴포넌트 — 전 페이지에서 추가 가능
-const LP_RICH = ["media-text", "feature-cols", "cta-band", "faq", "steps", "voice"];
+// 各ページ種別でパレットに表示する追加可能なコンポーネント(順序=表示順)。
+// 共通コンポーネントは全ページで追加可能。
+export const COMMON = ["custom", "carousel", "topics", "category-grid", "info", "free-banner", "free-text"];
+// LP/特集型リッチコンポーネント — 全ページで追加可能
+export const LP_RICH = ["media-text", "feature-cols", "cta-band", "faq", "steps", "voice"];
 export const palette = {
   top: ["hero", "promo", "ranking", ...COMMON, ...LP_RICH],
   list: ["breadcrumb", "page-title", "sortbar", "list-body", "pagination", ...COMMON, ...LP_RICH],

@@ -1,6 +1,6 @@
-// build-static.mjs — 빌더를 단일 HTML로 번들 → AES-GCM 암호화 → docs/index.html 생성(GitHub Pages용)
-// 비번을 입력해야 복호화되어 열림. 없으면 소스는 암호문만 노출(정적 호스팅에서 가능한 최선).
-// 사용: node build-static.mjs            (.wf-pass 또는 기본값 사용)
+// build-static.mjs — ビルダーを単一HTMLにバンドル → AES-GCM暗号化 → docs/index.html を生成(GitHub Pages用)
+// パスワードを入力すると復号されて開く。なければソースは暗号文のみ露出(静的ホスティングで可能な最善策)。
+// 使用: node build-static.mjs            (.wf-pass またはデフォルト値を使用)
 //       WF_PASSWORD=xxx node build-static.mjs
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { webcrypto as wc } from "node:crypto";
@@ -10,7 +10,7 @@ import { fileURLToPath } from "url";
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const rd = (p) => readFileSync(path.join(ROOT, p), "utf8");
 
-// ---- 비밀번호 ----
+// ---- パスワード ----
 function resolvePassword() {
   if (process.env.WF_PASSWORD) return process.env.WF_PASSWORD;
   try {
@@ -21,14 +21,14 @@ function resolvePassword() {
 }
 const PASSWORD = resolvePassword();
 
-// ---- 1) 모듈 번들: import/export 제거 후 하나의 스크립트로 ----
+// ---- 1) モジュールバンドル: import/export を除去して1つのスクリプトに ----
 const strip = (src) => src.replace(/^\s*import\s.*$/gm, "").replace(/^\s*export\s+/gm, "");
 
 const wireframeCss = rd("styles/wireframe.css");
 const builderCss = rd("styles/builder.css");
 
 let appJs = strip(rd("src/app.js"));
-// 런타임 fetch(wireframe.css) → 인라인 상수로 대체(정적 단일파일이라 fetch 불가)
+// ランタイムの fetch(wireframe.css) → インライン定数に置換(静的な単一ファイルのため fetch 不可)
 appJs = appJs.replace(/CSS\s*=\s*await\s*fetch\([^)]*\)\.then\([^;]*\);/, "CSS = WF_CSS;");
 
 const bundleJs = [
@@ -42,7 +42,7 @@ const bundleJs = [
   appJs,
 ].join("\n");
 
-// index.html 의 <body> 내부(모듈 스크립트 태그는 제외)
+// index.html の <body> 内部(モジュールスクリプトタグは除外)
 const indexHtml = rd("index.html");
 const bodyInner = indexHtml
   .replace(/[\s\S]*<body>/i, "")
@@ -67,7 +67,7 @@ ${bundleJs}
 </body>
 </html>`;
 
-// ---- 2) AES-GCM 암호화 ----
+// ---- 2) AES-GCM 暗号化 ----
 const enc = new TextEncoder();
 const salt = wc.getRandomValues(new Uint8Array(16));
 const iv = wc.getRandomValues(new Uint8Array(12));
@@ -86,7 +86,7 @@ const CT = b64(new Uint8Array(ctBuf));
 const SALT = b64(salt);
 const IV = b64(iv);
 
-// ---- 3) 게이트 HTML(암호문 + 복호화 부트스트랩) ----
+// ---- 3) ゲートHTML(暗号文 + 復号ブートストラップ) ----
 const gate = `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -136,13 +136,13 @@ const gate = `<!DOCTYPE html>
     catch(e){ err.textContent="パスワードが正しくありません。"; btn.disabled=false; pw.select(); }
   }
   f.addEventListener("submit",function(e){e.preventDefault();tryPw(pw.value);});
-  // 같은 세션에서 재접속 시 자동 열기
+  // 同じセッションで再アクセス時に自動で開く
   try{ var saved=sessionStorage.getItem("wf_pw"); if(saved) tryPw(saved); }catch(e){}
 <\/script>
 </body>
 </html>`;
 
-// ---- 4) 출력: 저장소 루트의 docs/ (GitHub Pages) ----
+// ---- 4) 出力: リポジトリルートの docs/ (GitHub Pages) ----
 const outDir = path.join(ROOT, "..", "docs");
 mkdirSync(outDir, { recursive: true });
 writeFileSync(path.join(outDir, "index.html"), gate);

@@ -1,4 +1,4 @@
-/* builder.css — 빌더 UI 크롬 (와이어프레임 출력물과 무관, 이 앱 전용) */
+/* builder.css — ビルダーUIクローム (ワイヤーフレーム出力物とは無関係、このアプリ専用) */
 :root{
   --bg:#f4f5f7; --panel:#fff; --line:#dcdfe4; --ink:#1f2430; --muted:#6b7280;
   --accent:#2b6cb0; --accent-ink:#fff; --chip:#eef1f5;
@@ -10,14 +10,18 @@ body{margin:0;background:var(--bg);color:var(--ink);
 
 .app{display:grid;grid-template-rows:auto 1fr;height:100vh;}
 
-/* ---- 툴바 ---- */
-#topbar{display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--panel);
+/* ---- ツールバー ---- */
+#topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--panel);
   border-bottom:1px solid var(--line);flex-wrap:wrap;}
 .tb-title{font-weight:700;font-size:15px;margin-right:8px;}
 .tb-field{display:flex;flex-direction:column;font-size:11px;color:var(--muted);gap:3px;}
 .tb-field select{font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);}
 .tb-autosave{font-size:11px;color:#2e9e5b;display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .tb-spacer{flex:1;}
+/* 右側の操作群はひとまとまりで右寄せ(貪欲な spacer による不要な折り返しを防ぐ) */
+.tb-actions{display:flex;align-items:center;gap:8px;margin-left:auto;}
+/* テンプレート名が長くてもツールバーを押し広げない */
+#selTpl{max-width:150px;}
 .btn{border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;background:#fff;color:var(--ink);}
 .btn-ghost:hover{background:var(--chip);}
 .btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600;}
@@ -27,23 +31,89 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .btn-ico{padding:6px 10px;font-size:15px;line-height:1;}
 .btn:disabled{opacity:.4;cursor:not-allowed;}
 
-/* ---- 본문 2컬럼 ---- */
+/* ---- 本文2カラム ---- */
 .main{display:grid;grid-template-columns:320px 1fr;min-height:0;}
 
-/* 편집 패널 접힘(PC/SP 공통): 패널 숨기고 프리뷰가 전체 차지 */
+/* 編集パネル折りたたみ(PC/SP共通): パネルを隠してプレビューが全体を占有 */
 .app.is-collapsed .main{grid-template-columns:1fr;}
 .app.is-collapsed #panel{display:none;}
 #panel{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:14px;}
 .pan-block{margin-bottom:22px;}
 .pan-block h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px;}
 
-.palette{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.chip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:8px;
-  padding:5px 8px;font-size:12px;cursor:pointer;color:var(--ink);text-align:left;min-width:0;}
+/* パレット: 1列リスト(ラベルの省略を防ぐ) + カテゴリ分類 + 検索 */
+.pal-search{width:100%;box-sizing:border-box;padding:7px 10px;margin:0 0 10px;font-size:12px;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);}
+.pal-search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(43,108,176,.15);}
+.pal-grp{margin-bottom:6px;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+/* カテゴリ見出し = アコーディオンのトグル */
+.pal-grp-ttl{display:flex;align-items:center;gap:6px;width:100%;background:#f8f9fb;border:0;
+  padding:7px 9px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;text-align:left;}
+.pal-grp-ttl:hover{background:#f0f3f7;color:var(--ink);}
+.pal-grp.is-open .pal-grp-ttl{border-bottom:1px solid var(--line);}
+.pal-caret{flex:0 0 auto;font-size:9px;color:#9aa1ab;}
+.pal-grp-name{flex:1;}
+.pal-grp-count{flex:0 0 auto;background:#e5e9ef;color:var(--muted);border-radius:9px;
+  padding:1px 7px;font-size:10px;font-weight:600;}
+.pal-grp .palette{padding:7px;}
+/* 折りたたみ: .palette の display:flex が [hidden] より強いためクラスで制御 */
+.pal-grp:not(.is-open) .palette{display:none;}
+.palette{display:flex;flex-direction:column;gap:4px;}
+.chip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:5px 9px;font-size:12px;cursor:pointer;color:var(--ink);text-align:left;min-width:0;width:100%;}
 .chip:hover{border-color:var(--accent);color:var(--accent);background:#f6f9fd;}
 .chip-lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-/* 미니 도식 아이콘 */
+/* チップ選択時のインライン操作ボタン */
+.chip-wrap{display:flex;flex-direction:column;}
+.chip-wrap.is-picked .chip{border-color:var(--accent);background:#f6f9fd;color:var(--accent);
+  border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.chip-acts{display:flex;gap:4px;padding:5px 6px;border:1px solid var(--accent);border-top:0;
+  border-radius:0 0 8px 8px;background:#f6f9fd;}
+.chip-act{flex:1;border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 6px;
+  font-size:11px;cursor:pointer;color:var(--ink);white-space:nowrap;}
+.chip-act--now:hover{background:#eef4fb;border-color:var(--accent);color:var(--accent);}
+.chip-act--edit:hover{background:#fdf7db;border-color:#d4a017;color:#6b5900;}
+
+/* 「編集して追加」モーダル */
+.am-box{position:relative;background:#fff;border-radius:12px;max-width:520px;width:100%;
+  padding:24px 26px;max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.am-ttl{font-size:17px;margin:0 0 4px;}
+.am-h3{font-size:12px;margin:18px 0 8px;color:var(--accent);border-left:3px solid var(--accent);padding-left:8px;}
+.am-opts{display:flex;flex-direction:column;gap:8px;}
+.muted-note{font-size:12px;color:var(--muted);margin:0;}
+.am-pos select{width:100%;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);}
+.am-cur{margin-top:8px;}
+.am-cur summary{font-size:11px;color:var(--muted);cursor:pointer;}
+.am-list{margin:8px 0 0;padding:0;list-style:none;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+.am-li{display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 9px;border-bottom:1px solid #eef0f3;}
+.am-li:last-child{border-bottom:0;}
+.am-li--empty{color:var(--muted);justify-content:center;}
+.am-n{width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:10px;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.am-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:22px;}
+
+/* 追加直後のセクションを一瞬ハイライト */
+@keyframes wfNewFlash{0%{background:#fff6d5;border-color:#e6c34a;}100%{background:#fff;border-color:var(--line);}}
+.sec.is-new{animation:wfNewFlash 1.4s ease-out;}
+
+/* トースト通知 */
+.wf-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);
+  background:#1f2430;color:#fff;font-size:13px;padding:9px 16px;border-radius:8px;
+  box-shadow:0 6px 24px rgba(0,0,0,.2);opacity:0;pointer-events:none;z-index:9999;
+  transition:opacity .18s ease,transform .18s ease;}
+.wf-toast.is-on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ⋯ その他メニュー */
+.tb-more{position:relative;}
+.tb-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.12);padding:5px;min-width:170px;z-index:100;}
+.tb-menu-item{display:block;width:100%;text-align:left;background:none;border:0;border-radius:6px;
+  padding:8px 10px;font-size:13px;color:var(--ink);cursor:pointer;}
+.tb-menu-item:hover{background:#f2f5f9;color:var(--accent);}
+.tb-menu-sep{border:0;border-top:1px solid var(--line);margin:4px 2px;}
+
+/* ミニ図式アイコン */
 .cicon-wrap{flex:0 0 auto;display:inline-flex;background:#fff;border:1px solid #e2e5ea;border-radius:4px;padding:1px;}
 .cicon{width:28px;height:20px;display:block;}
 .chip:hover .cicon-wrap{border-color:#cfe0f2;}
@@ -83,7 +153,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .opt input,.opt select{font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);}
 .opt-bool{justify-content:flex-start;gap:6px;cursor:pointer;}
 
-/* 커스텀 블럭: 기존 블럭과 시각적으로 차별(옅은 노란빛) */
+/* カスタムブロック: 既存ブロックと視覚的に差別化(淡い黄色) */
 .sec.is-custom .sec-head{background:#fdf7db;}
 .cust-add{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
 .chip.cadd{font-size:11px;padding:4px 8px;border-radius:6px;background:#fdf3c4;border-color:#e6d27a;color:#6b5900;}
@@ -101,7 +171,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .cel-fields input[type=text]{flex:1;min-width:90px;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
 .cel-fields select{font-size:12px;padding:3px 5px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
 
-/* ---- 스테이지(프리뷰) ---- */
+/* ---- ステージ(プレビュー) ---- */
 .stage{min-height:0;overflow:auto;padding:20px;display:flex;justify-content:center;background:#e9ecf0;}
 .frame-wrap{background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.12);height:100%;}
 #preview{border:0;width:100%;height:100%;background:#fff;display:block;}
@@ -110,7 +180,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .stage.dev-pc .frame-wrap{width:1200px;flex:0 0 1200px;}
 .stage.dev-sp .frame-wrap{width:390px;flex:0 0 390px;}
 
-/* 사용 가이드 모달 */
+/* 利用ガイドモーダル */
 .guide-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;
   display:flex;align-items:center;justify-content:center;padding:20px;}
 .guide-box{position:relative;background:#fff;border-radius:12px;max-width:680px;width:100%;
@@ -127,12 +197,12 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .guide-kbd{border:1px solid #ccc;border-radius:4px;padding:1px 6px;background:#f3f3f3;font-size:11px;font-family:monospace;}
 
 @media (max-width:900px){
-  .app{height:auto;min-height:100vh;}          /* 고정 100vh 해제 → 세로 스크롤 허용 */
+  .app{height:auto;min-height:100vh;}          /* 固定100vh解除 → 縦スクロール許可 */
   #topbar{gap:8px 10px;padding:8px 12px;position:sticky;top:0;z-index:20;}
-  .tb-title{width:100%;font-size:14px;margin:0;}   /* 제목 한 줄 차지 */
+  .tb-title{width:100%;font-size:14px;margin:0;}   /* タイトルが一行を占有 */
   .tb-field{font-size:10px;}
   .tb-field select,.btn{padding:5px 8px;font-size:12px;}
-  .tb-autosave{display:none;}                   /* 긴 자동저장 안내문 숨김(공간 절약) */
+  .tb-autosave{display:none;}                   /* 長い自動保存の案内文を非表示(スペース節約) */
   .main{grid-template-columns:1fr;}
   #panel{max-height:42vh;overflow-y:auto;border-right:0;border-bottom:1px solid var(--line);}
   .stage{min-height:auto;padding:12px;}

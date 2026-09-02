@@ -1,62 +1,46 @@
-// app.js — 빌더 UI 컨트롤러
+// app.js — ビルダー UI コントローラー
 import { catalog, defaultOpts } from "./catalog.js";
-import { templates, palette, PAGE_TYPES } from "./templates.js";
+import { templates, palette, PAGE_TYPES, COMMON, LP_RICH } from "./templates.js";
 import { i18n, strings } from "./i18n.js";
-import { buildDocument } from "./export.js";
+import { buildDocument, buildFiles, buildProject } from "./export.js";
+import { zipStore } from "./zip.js";
+import { encodeState, decodeState } from "./share.js";
 import { iconFor } from "./icons.js";
 import { gallery } from "./gallery.js";
+import { sanitize } from "./sanitize.js";
 
 const state = {
-  lang: "ja", // 신규 접속 기본 언어(저장된 값이 있으면 복원됨)
+  lang: "ja", // 新規アクセス時のデフォルト言語(保存された値があれば復元される)
   device: "both",
   pageType: "top",
-  showNotes: true, // 주석(wf-note·코멘트) 표시 여부
-  sections: [], // [{ comp, opts, comment }]
+  showNotes: true, // 注記(wf-note·コメント)の表示可否
+  sections: [], // アクティブページのセクション [{ comp, opts, comment }]
+  pages: {}, // ページ種別ごとの作業内容 { [pageType]: sections } — 切り替えても消えない
 };
 
-let selIdx = null; // 삽입 기준으로 선택된 섹션 index (null=맨 뒤 추가)
-let panelCollapsed = false; // 편집 패널 접힘 여부(PC/SP 공통)
-const REPO_URL = "https://github.com/hyunsu0224/work"; // 요청(이슈) 대상 저장소
+let selIdx = null; // 挿入基準として選択されたセクション index (null=末尾に追加)
+let paletteQuery = ""; // パレット検索クエリ
+let palOpen = { page: true, common: false, rich: false }; // パレット各カテゴリの開閉
+let palPickId = null; // インライン操作ボタンを開いているコンポーネントid
+let panelCollapsed = false; // 編集パネルの折りたたみ可否(PC/SP 共通)
+const REPO_URL = "https://github.com/hyunsu0224/work"; // リクエスト(イシュー)対象のリポジトリ
 
-let CSS = ""; // wireframe.css 원문
+let CSS = ""; // wireframe.css の原文
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
 // ======================================================================
-//  영속화 (localStorage 자동저장 + JSON 저장/불러오기)
+//  永続化 (localStorage 自動保存 + JSON 保存/読み込み)
 // ======================================================================
 const STORAGE_KEY = "ec-wf-state-v1";
 
 function persist() {
+  syncActivePage();
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (_) {
-    /* 용량초과·프라이빗모드 등은 조용히 무시 */
+    /* 容量超過·プライベートモードなどは静かに無視 */
   }
-}
-
-// 외부에서 들어온 state 후보를 검증·정제(신뢰 못 할 데이터 방어)
-function sanitize(cand) {
-  if (!cand || typeof cand !== "object") return null;
-  const lang = "ja"; // 일본어 고정(언어 토글 제거)
-  const device = ["both", "pc", "sp"].includes(cand.device) ? cand.device : "both";
-  const pageType = PAGE_TYPES.includes(cand.pageType) ? cand.pageType : "top";
-  const showNotes = cand.showNotes !== false;
-  const sections = Array.isArray(cand.sections)
-    ? cand.sections
-        .filter((s) => s && catalog[s.comp]) // 알 수 없는 컴포넌트 제거
-        .map((s) => {
-          const opts = { ...defaultOpts(s.comp), ...(s.opts || {}) };
-          if (s.comp === "custom") {
-            const valid = new Set(["heading", "text", "image", "button", "spacer", "divider"]);
-            opts.elements = Array.isArray(opts.elements)
-              ? opts.elements.filter((el) => el && valid.has(el.type)).map((el) => ({ ...el }))
-              : [];
-          }
-          return { comp: s.comp, opts, comment: typeof s.comment === "string" ? s.comment : "" };
-        })
-    : [];
-  return { lang, device, pageType, showNotes, sections };
 }
 
 function applyState(next) {
@@ -64,16 +48,17 @@ function applyState(next) {
 }
 
 // ======================================================================
-//  히스토리 (undo / redo) — 내용(pageType·sections) 스냅샷 스택
-//  ※ 언어·표시대상·주석표시 같은 화면설정은 되돌리기 대상 아님(내용만)
+//  ヒストリー (undo / redo) — 内容(pageType·sections)のスナップショットスタック
+//  ※ 言語·表示対象·注記表示のような画面設定は元に戻す対象ではない(内容のみ)
 // ======================================================================
 const HIST_MAX = 100;
 let history = [];
-let hp = -1; // 현재 스냅샷 포인터
-let histTimer = null; // 연속 입력(타이핑) 코얼레싱
+let hp = -1; // 現在のスナップショットポインター
+let histTimer = null; // 連続入力(タイピング)のコアレッシング
 
 function snapshot() {
-  return JSON.parse(JSON.stringify({ pageType: state.pageType, sections: state.sections }));
+  syncActivePage();
+  return JSON.parse(JSON.stringify({ pageType: state.pageType, pages: state.pages }));
 }
 function histInit() {
   history = [snapshot()];
@@ -83,8 +68,8 @@ function histInit() {
 function histPush() {
   clearTimeout(histTimer);
   const snap = snapshot();
-  if (hp >= 0 && JSON.stringify(history[hp]) === JSON.stringify(snap)) return; // 변화 없음 → skip
-  history = history.slice(0, hp + 1); // redo 가지 잘라냄
+  if (hp >= 0 && JSON.stringify(history[hp]) === JSON.stringify(snap)) return; // 変化なし → skip
+  history = history.slice(0, hp + 1); // redo の枝を切り落とす
   history.push(snap);
   if (history.length > HIST_MAX) history.shift();
   hp = history.length - 1;
@@ -92,13 +77,14 @@ function histPush() {
 }
 function histPushDebounced() {
   clearTimeout(histTimer);
-  histTimer = setTimeout(histPush, 500); // 타이핑이 멈추면 1개 항목으로 묶임
+  histTimer = setTimeout(histPush, 500); // タイピングが止まると1つの項目にまとめられる
 }
 function loadSnapshot(snap) {
   state.pageType = snap.pageType;
-  state.sections = JSON.parse(JSON.stringify(snap.sections));
+  state.pages = JSON.parse(JSON.stringify(snap.pages));
+  state.sections = state.pages[state.pageType] || [];
   selIdx = null;
-  renderAll(); // 현재 언어·표시대상은 그대로 유지
+  renderAll(); // 現在の言語·表示対象はそのまま維持
 }
 function undo() {
   clearTimeout(histTimer);
@@ -134,19 +120,20 @@ function restore() {
   }
 }
 
-// ---- UI 상태(패널 접힘) 영속화 ----
+// ---- UI 状態(パネルの折りたたみ)の永続化 ----
 const UI_KEY = "ec-wf-ui";
-let guideSeen = false; // 가이드 첫 표시 여부
+let guideSeen = false; // ガイドの初回表示可否
 function loadUI() {
   try {
     const u = JSON.parse(localStorage.getItem(UI_KEY) || "{}");
     panelCollapsed = !!u.collapsed;
     guideSeen = !!u.guideSeen;
+    if (u.palOpen && typeof u.palOpen === "object") palOpen = { ...palOpen, ...u.palOpen };
   } catch (_) {}
 }
 function saveUI() {
   try {
-    localStorage.setItem(UI_KEY, JSON.stringify({ collapsed: panelCollapsed, guideSeen }));
+    localStorage.setItem(UI_KEY, JSON.stringify({ collapsed: panelCollapsed, guideSeen, palOpen }));
   } catch (_) {}
 }
 function applyCollapsed() {
@@ -156,7 +143,7 @@ function applyCollapsed() {
   if (b) b.textContent = (panelCollapsed ? "☰ " : "◀ ") + ui().panel;
 }
 
-// ---- 상태 초기화 ----
+// ---- 状態の初期化 ----
 function loadTemplate(pageType) {
   state.pageType = pageType;
   state.sections = (templates[pageType] || []).map((s) => ({
@@ -164,15 +151,34 @@ function loadTemplate(pageType) {
     opts: { ...defaultOpts(s.comp), ...(s.opts || {}) },
     comment: "",
   }));
+  state.pages[pageType] = state.sections; // pages 側にも反映(リセット/初期化経路の一貫性)
   selIdx = null;
 }
+// アクティブページの編集内容を pages に書き戻す(pages を読む前に必ず呼ぶ)
+function syncActivePage() {
+  state.pages[state.pageType] = state.sections;
+}
 
-// ---- 라벨 헬퍼 ----
+// ページ種別の切り替え。今のページを保存し、切替先は保存済みがあれば復元・無ければ標準テンプレート。
+function switchPage(nextType) {
+  syncActivePage();
+  state.pageType = nextType;
+  if (Array.isArray(state.pages[nextType])) {
+    state.sections = state.pages[nextType];
+    selIdx = null;
+  } else {
+    loadTemplate(nextType);
+    state.pages[nextType] = state.sections;
+  }
+}
+
+
+// ---- ラベルヘルパー ----
 const ui = () => i18n[state.lang].ui;
 const compLabel = (id) => strings[state.lang].comp[id] || id;
 
 // ======================================================================
-//  렌더: 상단 툴바
+//  レンダー: 上部ツールバー
 // ======================================================================
 function renderTopbar() {
   const t = i18n[state.lang];
@@ -200,23 +206,33 @@ function renderTopbar() {
     <label class="tb-field">${ui().notesToggle}
       <button id="btnNotes" class="btn btn-toggle ${state.showNotes ? "is-on" : ""}">${state.showNotes ? "ON" : "OFF"}</button>
     </label>
-    <span class="tb-autosave" title="${ui().autosave}">● ${ui().autosave}</span>
-    <div class="tb-spacer"></div>
-    <button id="btnGuide" class="btn btn-ghost">${ui().guide}</button>
-    <button id="btnRequest" class="btn btn-ghost" title="GitHub Issue">${ui().request}</button>
+    <span class="tb-autosave" title="${ui().autosave}">● ${ui().autosaveShort}</span>
+    <div class="tb-actions">
     <button id="btnUndo" class="btn btn-ico" title="${ui().undo} (Ctrl+Z)">↶</button>
     <button id="btnRedo" class="btn btn-ico" title="${ui().redo} (Ctrl+Shift+Z)">↷</button>
     <button id="btnSave" class="btn btn-ghost">${ui().save}</button>
-    <button id="btnLoad" class="btn btn-ghost">${ui().load}</button>
-    <button id="btnReset" class="btn btn-ghost">${ui().reset}</button>
-    <button id="btnOpen" class="btn btn-ghost">${ui().openTab}</button>
-    <button id="btnCopy" class="btn btn-ghost">${ui().copyHtml}</button>
     <button id="btnDownload" class="btn btn-primary">${ui().download}</button>
+    <div class="tb-more">
+      <button id="btnMore" class="btn btn-ico" title="${ui().more}" aria-haspopup="true" aria-expanded="false">⋯</button>
+      <div id="moreMenu" class="tb-menu" hidden>
+        <button id="btnLoad" class="tb-menu-item">${ui().load}</button>
+        <button id="btnZip" class="tb-menu-item">${ui().downloadZip}</button>
+        <button id="btnProject" class="tb-menu-item">${ui().downloadProject}</button>
+        <button id="btnShare" class="tb-menu-item">${ui().shareLink}</button>
+        <button id="btnCopy" class="tb-menu-item">${ui().copyHtml}</button>
+        <button id="btnOpen" class="tb-menu-item">${ui().openTab}</button>
+        <button id="btnReset" class="tb-menu-item">${ui().reset}</button>
+        <hr class="tb-menu-sep">
+        <button id="btnGuide" class="tb-menu-item">${ui().guide}</button>
+        <button id="btnRequest" class="tb-menu-item" title="GitHub Issue">${ui().request}</button>
+      </div>
+    </div>
+    </div>
     <input id="fileLoad" type="file" accept="application/json,.json" hidden>
   `;
 
   $("#selPage").addEventListener("change", (e) => {
-    loadTemplate(e.target.value);
+    switchPage(e.target.value); // 現在のページの作業内容は保持される
     renderAll();
     histPush();
   });
@@ -229,11 +245,11 @@ function renderTopbar() {
   if (selTpl) {
     selTpl.addEventListener("change", (e) => {
       const id = e.target.value;
-      e.target.value = ""; // 선택 표시 초기화(다음 선택 허용)
+      e.target.value = ""; // 選択表示をリセット(次の選択を許可)
       if (!id) return;
       const tpl = gallery.find((g) => g.id === id);
       if (!tpl) return;
-      if (!confirm(ui().templateWarn)) return; // 현재 작업 사라짐 경고
+      if (!confirm(ui().templateWarn)) return; // 現在の作業が消える旨の警告
       const clean = sanitize(tpl.state);
       if (!clean) return;
       applyState(clean);
@@ -260,6 +276,9 @@ function renderTopbar() {
   $("#btnUndo").addEventListener("click", undo);
   $("#btnRedo").addEventListener("click", redo);
   $("#btnDownload").addEventListener("click", download);
+  $("#btnZip").addEventListener("click", downloadZip);
+  $("#btnProject").addEventListener("click", downloadProject);
+  $("#btnShare").addEventListener("click", shareLink);
   $("#btnOpen").addEventListener("click", openFull);
   $("#btnCopy").addEventListener("click", copyHtml);
   $("#btnSave").addEventListener("click", saveJson);
@@ -272,9 +291,30 @@ function renderTopbar() {
     b.classList.toggle("is-on", state.showNotes);
     updatePreview();
   });
+
+  // ---- ⋯ その他メニュー ----
+  const moreBtn = $("#btnMore");
+  const moreMenu = $("#moreMenu");
+  const closeMore = () => {
+    moreMenu.hidden = true;
+    moreBtn.setAttribute("aria-expanded", "false");
+  };
+  moreBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = moreMenu.hidden;
+    moreMenu.hidden = !willOpen;
+    moreBtn.setAttribute("aria-expanded", String(willOpen));
+  });
+  moreMenu.addEventListener("click", () => closeMore()); // 項目選択後は閉じる
+  document.addEventListener("click", (e) => {
+    if (!moreMenu.hidden && !e.target.closest(".tb-more")) closeMore();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !moreMenu.hidden) closeMore();
+  });
 }
 
-// ---- 구성 JSON 저장/불러오기 ----
+// ---- 構成 JSON の保存/読み込み ----
 function saveJson() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -289,7 +329,7 @@ function saveJson() {
 
 function loadJson(e) {
   const file = e.target.files && e.target.files[0];
-  e.target.value = ""; // 같은 파일 재선택 허용
+  e.target.value = ""; // 同じファイルの再選択を許可
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
@@ -311,16 +351,61 @@ function safeParse(txt) {
 }
 
 // ======================================================================
-//  렌더: 왼쪽 패널 (팔레트 + 섹션 리스트)
+//  レンダー: 左パネル (パレット + セクションリスト)
 // ======================================================================
-function renderPanel() {
-  // 팔레트
-  const pal = (palette[state.pageType] || Object.keys(catalog))
-    .filter((id, i, arr) => arr.indexOf(id) === i)
-    .map((id) => `<button class="chip" data-add="${id}"><span class="cicon-wrap">${iconFor(id)}</span><span class="chip-lbl">${compLabel(id)}</span></button>`)
-    .join("");
+// パレットをカテゴリ別に分類 (このページの標準 / 共通 / LP・特集)
+function paletteGroups() {
+  const all = (palette[state.pageType] || Object.keys(catalog)).filter((id, i, arr) => arr.indexOf(id) === i);
+  const common = new Set(COMMON);
+  const rich = new Set(LP_RICH);
+  return [
+    { key: "page", label: ui().grpPage, ids: all.filter((id) => !common.has(id) && !rich.has(id)) },
+    { key: "common", label: ui().grpCommon, ids: all.filter((id) => common.has(id)) },
+    { key: "rich", label: ui().grpRich, ids: all.filter((id) => rich.has(id)) },
+  ].filter((g) => g.ids.length);
+}
 
-  // 섹션 리스트
+function renderPalette() {
+  const q = paletteQuery.trim().toLowerCase();
+  const match = (id) => {
+    const name = compLabel(id);
+    return !q || name.toLowerCase().includes(q) || id.toLowerCase().includes(q);
+  };
+  const row = (id) => {
+    const name = compLabel(id);
+    const picked = palPickId === id;
+    return `<div class="chip-wrap${picked ? " is-picked" : ""}">
+      <button class="chip" data-pick="${id}" title="${name}" aria-expanded="${picked}">
+        <span class="cicon-wrap">${iconFor(id)}</span><span class="chip-lbl">${name}</span>
+      </button>
+      ${picked ? `<div class="chip-acts">
+        <button class="chip-act chip-act--now" data-add="${id}">${ui().addNow}</button>
+        <button class="chip-act chip-act--edit" data-addedit="${id}">${ui().addEdit}</button>
+      </div>` : ""}
+    </div>`;
+  };
+  const html = paletteGroups()
+    .map((g) => {
+      const hits = g.ids.filter(match);
+      if (!hits.length) return "";
+      // 検索中はヒットしたグループを常に開く(閉じたままだと検索が効かないように見えるため)
+      const open = q ? true : palOpen[g.key] !== false;
+      return `<div class="pal-grp${open ? " is-open" : ""}">
+        <button type="button" class="pal-grp-ttl" data-grp="${g.key}" aria-expanded="${open}">
+          <span class="pal-caret">${open ? "▾" : "▸"}</span>
+          <span class="pal-grp-name">${g.label}</span>
+          <span class="pal-grp-count">${hits.length}</span>
+        </button>
+        <div class="palette"${open ? "" : " hidden"}>${hits.map(row).join("")}</div>
+      </div>`;
+    })
+    .join("");
+  return html || `<p class="empty">${ui().searchEmpty}</p>`;
+}
+
+function renderPanel() {
+
+  // セクションリスト
   let list;
   if (state.sections.length === 0) {
     list = `<p class="empty">${ui().empty}</p>`;
@@ -359,7 +444,9 @@ function renderPanel() {
   $("#panel").innerHTML = `
     <div class="pan-block">
       <h3>${ui().palette}</h3>
-      <div class="palette">${pal}</div>
+      <input id="palSearch" class="pal-search" type="search" placeholder="${ui().searchPh}"
+             value="${paletteQuery.replace(/"/g, "&quot;")}" autocomplete="off">
+      <div id="palList">${renderPalette()}</div>
     </div>
     <div class="pan-block">
       <h3>${ui().sections}</h3>
@@ -369,7 +456,7 @@ function renderPanel() {
   `;
 }
 
-// {ko,ja} 또는 문자열 라벨을 현재 언어로
+// {ko,ja} または文字列ラベルを現在の言語に
 function L(label) {
   if (label && typeof label === "object") return label[state.lang] || label.ja || label.ko || "";
   return label || "";
@@ -399,14 +486,14 @@ function renderOptions(s, i) {
     .join("");
 }
 
-// 새 섹션 생성
+// 新しいセクションを生成
 function newSection(id) {
   const opts = defaultOpts(id);
   if (id === "custom" && !Array.isArray(opts.elements)) opts.elements = [];
   return { comp: id, opts, comment: "" };
 }
 
-// ---- 커스텀 블럭 편집기 ----
+// ---- カスタムブロックエディター ----
 const CUST_TYPES = [
   ["heading", "見出し"], ["text", "テキスト"], ["image", "画像"],
   ["button", "ボタン"], ["spacer", "余白"], ["divider", "区切り線"],
@@ -443,7 +530,7 @@ function renderElRow(i, ei, el) {
   }
   if (el.type === "spacer") fields += celSelect(`${base}:size`, el.size || "md", [["sm", "小"], ["md", "中"], ["lg", "大"]]);
   if (el.type !== "spacer" && el.type !== "divider") fields += celSelect(`${base}:align`, el.align || "left", ALIGN_OPTS);
-  fields += celSelect(`${base}:width`, el.width || "full", WIDTH_OPTS); // 幅(좌우/다단 배치)
+  fields += celSelect(`${base}:width`, el.width || "full", WIDTH_OPTS); // 幅(左右/多段配置)
   return `<div class="cel" data-si="${i}" data-ei="${ei}">
             <div class="cel-head"><span class="cel-drag" draggable="true" title="${ui().dragHint}">⠿</span><span class="cel-type">${CUST_LABEL[el.type] || el.type}</span>
               <span class="cel-act"><button class="ico" data-cmove="${base}:-1" title="${ui().moveUp}">▲</button><button class="ico" data-cmove="${base}:1" title="${ui().moveDown}">▼</button><button class="ico ico-del" data-cdel="${base}" title="${ui().remove}">✕</button></span>
@@ -458,10 +545,35 @@ function renderCustomEditor(s, i) {
   return `<div class="cust"><div class="cust-add">${add}</div><div class="cust-list">${list}</div></div>`;
 }
 
-// ---- 패널 이벤트 (위임) ----
+// ---- パネルイベント (委譲) ----
 function bindPanel() {
   const panel = $("#panel");
   panel.addEventListener("click", (e) => {
+    // ---- パレットのカテゴリ開閉(アコーディオン) ----
+    const grp = e.target.closest("[data-grp]");
+    if (grp) {
+      const k = grp.dataset.grp;
+      palOpen[k] = palOpen[k] === false; // false→true / true(未定義)→false
+      saveUI();
+      const list = $("#palList");
+      if (list) list.innerHTML = renderPalette();
+      return;
+    }
+    // ---- パレット: チップを押すと操作ボタンをインライン展開 ----
+    const pick = e.target.closest("[data-pick]");
+    if (pick) {
+      const id = pick.dataset.pick;
+      palPickId = palPickId === id ? null : id; // 再クリックで閉じる
+      const list = $("#palList");
+      if (list) list.innerHTML = renderPalette();
+      return;
+    }
+    // ---- 編集して追加 → モーダル ----
+    const addEdit = e.target.closest("[data-addedit]");
+    if (addEdit) {
+      openAddModal(addEdit.dataset.addedit);
+      return;
+    }
     const add = e.target.closest("[data-add]");
     const dup = e.target.closest("[data-dup]");
     const rem = e.target.closest("[data-remove]");
@@ -470,7 +582,7 @@ function bindPanel() {
     const cadd = e.target.closest("[data-cadd]");
     const cmove = e.target.closest("[data-cmove]");
     const cdel = e.target.closest("[data-cdel]");
-    // ---- 커스텀 블럭 원시요소: 추가 / 이동 / 삭제 ----
+    // ---- カスタムブロックの原始要素: 追加 / 移動 / 削除 ----
     if (cadd) {
       const [i, type] = cadd.dataset.cadd.split(":");
       const sec = state.sections[+i];
@@ -503,15 +615,21 @@ function bindPanel() {
     }
     if (add) {
       const id = add.dataset.add;
+      let newIdx;
       if (selIdx != null && selIdx < state.sections.length) {
         state.sections.splice(selIdx + 1, 0, newSection(id));
         selIdx = selIdx + 1; // 방금 삽입한 항목을 다음 삽입 기준으로
+        newIdx = selIdx;
       } else {
         state.sections.push(newSection(id));
+        newIdx = state.sections.length - 1;
       }
+      palPickId = null; // インライン操作ボタンを閉じる
       renderPanel();
       updatePreview();
       histPush();
+      revealSection(newIdx); // ← 追加した位置までスクロール + ハイライト
+      toast(ui().added.replace("{name}", compLabel(id)));
     } else if (dup) {
       const i = +dup.dataset.dup;
       const src = state.sections[i];
@@ -546,6 +664,13 @@ function bindPanel() {
 
   // 옵션/코멘트 변경 → 프리뷰만 갱신(패널 재렌더 X, 포커스 유지)
   panel.addEventListener("input", (e) => {
+    // パレット検索: リストのみ差し替え(入力フォーカスを保つ)
+    if (e.target.id === "palSearch") {
+      paletteQuery = e.target.value;
+      const list = $("#palList");
+      if (list) list.innerHTML = renderPalette();
+      return;
+    }
     const opt = e.target.closest("[data-opt]");
     const cmt = e.target.closest("[data-comment]");
     const cel = e.target.closest("[data-cel]");
@@ -647,25 +772,112 @@ function bindPanel() {
 // ======================================================================
 //  프리뷰 & 다운로드
 // ======================================================================
-function updatePreview() {
-  persist(); // 모든 변경이 여기로 수렴 → 자동저장 단일 지점
-  const html = buildDocument(state, CSS);
-  const iframe = $("#preview");
-  iframe.srcdoc = html;
+// srcdoc 差し替えでプレビューは先頭に戻るため、直前のスクロール位置を復元する。
+// ただしセクション追加直後(revealPendingIdx がある)は、その位置へのスクロールを優先。
+let previewScrollMemo = 0;
+let revealPendingIdx = null;
+
+function onPreviewLoad() {
+  if (revealPendingIdx != null) {
+    const i = revealPendingIdx;
+    revealPendingIdx = null;
+    scrollPreviewTo(i);
+    return;
+  }
+  try {
+    const doc = $("#preview").contentDocument;
+    const se = doc && (doc.scrollingElement || doc.documentElement);
+    if (se) se.scrollTop = previewScrollMemo; // 復元は即時(アニメーションなし)
+  } catch (_) {
+    /* クロスオリジン等は無視 */
+  }
 }
 
-function download() {
-  const html = buildDocument(state, CSS);
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+function updatePreview() {
+  persist(); // 모든 변경이 여기로 수렴 → 자동저장 단일 지점
+  const iframe = $("#preview");
+  try {
+    const doc = iframe.contentDocument;
+    const se = doc && (doc.scrollingElement || doc.documentElement);
+    previewScrollMemo = se ? se.scrollTop : 0;
+  } catch (_) {
+    previewScrollMemo = 0;
+  }
+  // 同一関数参照なので重複登録されない(連続入力でも1回だけ発火)
+  iframe.addEventListener("load", onPreviewLoad, { once: true });
+  iframe.srcdoc = buildDocument(state, CSS, { markSections: true });
+}
+
+// Blob をダウンロードさせる共通処理
+function saveBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${state.pageType}-wireframe.html`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+// 単一HTML(CSS/JSを埋め込み) — 1ファイルで完結するので共有しやすい
+function download() {
+  const html = buildDocument(state, CSS);
+  saveBlob(new Blob([html], { type: "text/html;charset=utf-8" }), `${state.pageType}-wireframe.html`);
+}
+
+// 構成を URL に載せてコピー(サーバー不要・リンク1本で共有)
+async function shareLink() {
+  syncActivePage();
+  try {
+    const token = await encodeState(state);
+    const url = location.origin + location.pathname + "#wf=" + token;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch (_) {
+      // クリップボードが使えない場合は URL バーに反映するだけ
+      location.hash = "wf=" + token;
+    }
+    toast(ui().shareCopied);
+  } catch (_) {
+    toast(ui().shareFailed);
+  }
+}
+
+// 起動時: #wf=... があれば読み込みを提案する
+async function loadFromHash() {
+  const m = /(?:^|[#&])wf=([^&]+)/.exec(location.hash || "");
+  if (!m) return false;
+  const cleanHash = () => history.replaceState(null, "", location.pathname + location.search);
+  const data = await decodeState(m[1]);
+  if (!data) { cleanHash(); return false; } // 壊れたリンクは黙って捨てる
+  const clean = sanitize(data);
+  if (!clean || !clean.pages) { cleanHash(); return false; }
+  // キャンセル時は URL を残す(あとで読み込み直せるように)
+  if (!confirm(ui().shareConfirm)) return false;
+  applyState(clean);
+  cleanHash();
+  return true;
+}
+
+// プロジェクトZIP(全ページ + 共有 css/js + 目次) — セットで引き渡す用
+function downloadProject() {
+  syncActivePage();
+  const files = buildProject(state, CSS, PAGE_TYPES);
+  if (!files) return toast(ui().projectEmpty);
+  const pageCount = Object.keys(files).filter((n) => n.endsWith(".html") && n !== "index.html").length;
+  saveBlob(new Blob([zipStore(files)], { type: "application/zip" }), "wireframe-project.zip");
+  toast(ui().projectDone.replace("{count}", pageCount));
+}
+
+// 分割ZIP(index.html + style.css + script.js) — 実装に引き渡す用
+function downloadZip() {
+  const files = buildFiles(state, CSS);
+  const zip = zipStore(files);
+  saveBlob(new Blob([zip], { type: "application/zip" }), `${state.pageType}-wireframe.zip`);
+  toast(ui().zipDone);
+}
+
 
 // ======================================================================
 //  사용 가이드 (일본어) — ❓ ガイド 버튼 / 첫 접속 자동 표시
@@ -756,6 +968,222 @@ function flashBtn(sel, msg) {
   b.textContent = msg;
   setTimeout(() => (b.textContent = prev), 1200);
 }
+
+// 追加したセクションまでスクロールし、一瞬ハイライトする(操作結果を可視化)
+function revealSection(i) {
+  const el = document.querySelector(`#secList .sec[data-i="${i}"]`);
+  if (el) {
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.classList.add("is-new");
+    setTimeout(() => el.classList.remove("is-new"), 1400);
+  }
+  revealInPreview(i); // プレビュー側も同じセクションへ
+}
+
+// プレビュー(iframe)内の該当セクションへスクロール。
+// ・マーカーは display:contents でボックスを持たないので、実体のある最初の子要素を対象にする
+// ・sticky ヘッダーに隠れないよう、その高さぶんオフセットする
+function scrollPreviewTo(i) {
+  try {
+    const doc = $("#preview").contentDocument;
+    if (!doc) return false;
+    const wrap = doc.querySelectorAll("[data-wf-sec]")[i];
+    const target = wrap && wrap.firstElementChild;
+    if (!target) return false;
+
+    const hdr = doc.querySelector(".wf-header");
+    let offset = 0;
+    if (hdr) {
+      const cs = doc.defaultView.getComputedStyle(hdr);
+      offset = hdr.getBoundingClientRect().height + (parseFloat(cs.top) || 0);
+    }
+    const scroller = doc.scrollingElement || doc.documentElement;
+    const top = target.getBoundingClientRect().top + scroller.scrollTop - offset - 12;
+    // 直前に srcdoc を丸ごと差し替えた新しい文書なので、アニメーションせず即時に合わせる
+    // (smooth は再描画が止まっている環境でスクロールが始まらないことがある)
+    scroller.scrollTop = Math.max(0, top);
+    return true;
+  } catch (_) {
+    return false; // クロスオリジン等は無視
+  }
+}
+
+// updatePreview() は srcdoc を差し替えるため、読み込み完了を待ってからスクロールする
+// (直後に実行すると古い文書をスクロールし、新文書は先頭に戻ってしまう)
+// 直後の updatePreview() の load 時に「復元」ではなく「そのセクションへ移動」させる
+function revealInPreview(i) {
+  revealPendingIdx = i;
+  setTimeout(() => {
+    // load をすでに取り逃していた場合の保険
+    if (revealPendingIdx === i) {
+      revealPendingIdx = null;
+      scrollPreviewTo(i);
+    }
+  }, 450);
+}
+
+// ======================================================================
+//  「編集して追加」モーダル
+//  挿入前にオプションを設定し、挿入位置を番号で直接指定できる。
+// ======================================================================
+let draft = null; // { comp, opts, comment } — まだ state に入っていない下書き
+
+// 位置 0..N の選択肢を重複なく生成。0=先頭 / i+1=i番の後 / N=最後のセクションの後(=末尾)
+// ※ 位置 N は「最後のセクションの後」と「末尾」が同義。値の重複を避けつつ、
+//   最後に追加したセクション名も見えるよう「N. 名前 の後（末尾）」と表記する。
+function insertPosOptions(defaultPos) {
+  const n = state.sections.length;
+  const opt = (v, label) => `<option value="${v}" ${v === defaultPos ? "selected" : ""}>${label}</option>`;
+  if (n === 0) return opt(0, ui().modalPosEnd);
+  const out = [opt(0, ui().modalPosTop)];
+  for (let i = 0; i < n - 1; i++) {
+    out.push(opt(i + 1, ui().modalPosAfter.replace("{n}", i + 1).replace("{name}", compLabel(state.sections[i].comp))));
+  }
+  out.push(opt(n, ui().modalPosAfterEnd.replace("{n}", n).replace("{name}", compLabel(state.sections[n - 1].comp))));
+  return out.join("");
+}
+
+function addModalHtml() {
+  const name = compLabel(draft.comp);
+  const optsHtml = renderOptions({ comp: draft.comp, opts: draft.opts }, "d");
+  const custHtml = draft.comp === "custom" ? renderCustomEditor({ comp: draft.comp, opts: draft.opts }, "d") : "";
+  // 既定の挿入位置: 選択中セクションの直後、なければ末尾
+  const defPos = selIdx != null && selIdx < state.sections.length ? selIdx + 1 : state.sections.length;
+  const listHtml = state.sections.length
+    ? state.sections
+        .map((s, i) => `<li class="am-li"><span class="am-n">${i + 1}</span>${compLabel(s.comp)}</li>`)
+        .join("")
+    : `<li class="am-li am-li--empty">${ui().empty}</li>`;
+
+  return `<div class="am-box">
+    <button class="guide-close" id="amClose" aria-label="close">✕</button>
+    <h2 class="am-ttl">${ui().modalTitle.replace("{name}", name)}</h2>
+
+    <h3 class="am-h3">${ui().modalOptions}</h3>
+    <div class="am-opts">${optsHtml || custHtml ? optsHtml + custHtml : `<p class="muted-note">${ui().modalNoOpts}</p>`}</div>
+
+    <h3 class="am-h3">${ui().modalPos}</h3>
+    <div class="am-pos">
+      <select id="amPos">${insertPosOptions(defPos)}</select>
+    </div>
+    <details class="am-cur"><summary>${ui().modalCurrent.replace("{count}", state.sections.length)}</summary>
+      <ol class="am-list">${listHtml}</ol>
+    </details>
+
+    <div class="am-actions">
+      <button class="btn btn-ghost" id="amCancel">${ui().modalCancel}</button>
+      <button class="btn btn-primary" id="amOk">${ui().modalConfirm}</button>
+    </div>
+  </div>`;
+}
+
+function openAddModal(id) {
+  draft = newSection(id);
+  let ov = document.getElementById("wfAddModal");
+  if (!ov) {
+    ov = document.createElement("div");
+    ov.id = "wfAddModal";
+    ov.className = "guide-overlay";
+    document.body.appendChild(ov);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) closeAddModal();
+    });
+    // 下書きのオプション編集(data-opt の index が "d" のものを draft に反映)
+    ov.addEventListener("input", (e) => {
+      const opt = e.target.closest("[data-opt]");
+      const cel = e.target.closest("[data-cel]");
+      if (cel) {
+        const [, ei, prop] = cel.dataset.cel.split(":");
+        const el = draft.opts.elements && draft.opts.elements[+ei];
+        if (el) el[prop] = cel.type === "checkbox" ? cel.checked : cel.value;
+        return;
+      }
+      if (opt) {
+        const key = opt.dataset.opt.split(":")[1];
+        draft.opts[key] = opt.type === "checkbox" ? opt.checked : opt.type === "number" ? +opt.value : opt.value;
+      }
+    });
+    ov.addEventListener("click", (e) => {
+      if (e.target.closest("#amClose") || e.target.closest("#amCancel")) return closeAddModal();
+      if (e.target.closest("#amOk")) return confirmAddModal();
+      // カスタムブロックの原始要素: 追加 / 移動 / 削除(モーダルは #panel の外なので専用に処理)
+      const cadd = e.target.closest("[data-cadd]");
+      const cmove = e.target.closest("[data-cmove]");
+      const cdel = e.target.closest("[data-cdel]");
+      if (!cadd && !cmove && !cdel) return;
+      if (!Array.isArray(draft.opts.elements)) draft.opts.elements = [];
+      const els = draft.opts.elements;
+      if (cadd) {
+        els.push(newEl(cadd.dataset.cadd.split(":")[1]));
+      } else if (cmove) {
+        const [, ei, dir] = cmove.dataset.cmove.split(":").map((v, k) => (k === 0 ? v : Number(v)));
+        const j = ei + dir;
+        if (j >= 0 && j < els.length) [els[ei], els[j]] = [els[j], els[ei]];
+      } else if (cdel) {
+        els.splice(+cdel.dataset.cdel.split(":")[1], 1);
+      }
+      redrawModalCustom();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && ov.style.display === "flex") closeAddModal();
+    });
+  }
+  ov.innerHTML = addModalHtml();
+  ov.style.display = "flex";
+}
+
+// カスタムブロック編集部分だけ差し替え(挿入位置の選択値は保持)
+function redrawModalCustom() {
+  const ov = document.getElementById("wfAddModal");
+  if (!ov || !draft) return;
+  const keepPos = ov.querySelector("#amPos")?.value;
+  const host = ov.querySelector(".am-opts");
+  if (!host) return;
+  host.innerHTML =
+    renderOptions({ comp: draft.comp, opts: draft.opts }, "d") +
+    (draft.comp === "custom" ? renderCustomEditor({ comp: draft.comp, opts: draft.opts }, "d") : "");
+  const pos = ov.querySelector("#amPos");
+  if (pos && keepPos != null) pos.value = keepPos;
+}
+
+function closeAddModal() {
+  const ov = document.getElementById("wfAddModal");
+  if (ov) ov.style.display = "none";
+  draft = null;
+}
+
+function confirmAddModal() {
+  if (!draft) return;
+  const posSel = document.getElementById("amPos");
+  const pos = Math.max(0, Math.min(state.sections.length, +(posSel ? posSel.value : state.sections.length)));
+  state.sections.splice(pos, 0, draft);
+  const name = compLabel(draft.comp);
+  selIdx = pos; // 次の挿入基準を今入れた位置に
+  palPickId = null;
+  closeAddModal();
+  renderPanel();
+  updatePreview();
+  histPush();
+  revealSection(pos);
+  toast(ui().added.replace("{name}", name));
+}
+
+// 短いトースト通知
+let toastTimer = null;
+function toast(msg) {
+  let t = $("#wfToast");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "wfToast";
+    t.className = "wf-toast";
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add("is-on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("is-on"), 1800);
+}
+
 function copyHtml() {
   const html = buildDocument(state, CSS);
   const done = () => flashBtn("#btnCopy", ui().copied);
@@ -808,12 +1236,15 @@ function bindShortcuts() {
 
 async function init() {
   CSS = await fetch("./styles/wireframe.css").then((r) => r.text());
-  if (!restore()) loadTemplate("top"); // 저장된 구성 있으면 복원, 없으면 기본 템플릿
+  // 優先順: 共有リンク(#wf=) > localStorage の自動保存 > 標準テンプレート
+  const fromShare = await loadFromHash();
+  if (!fromShare && !restore()) loadTemplate("top");
   loadUI(); // 패널 접힘 상태 복원
   bindPanel();
   bindShortcuts();
   histInit(); // 현재 상태를 히스토리 0번으로
   renderAll();
+  if (fromShare) toast(ui().shareLoaded);
   if (!guideSeen) {
     openGuide(); // 첫 접속 시 가이드 자동 표시
     guideSeen = true;

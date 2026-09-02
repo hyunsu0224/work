@@ -1,4 +1,4 @@
-// export.js — 상태(state) → 자기완결 와이어프레임 HTML 문서 조립
+// export.js — 状態(state) → 自己完結ワイヤーフレームHTML文書の組み立て
 import { catalog } from "./catalog.js";
 import { strings, i18n, fmt } from "./i18n.js";
 
@@ -76,8 +76,13 @@ function headerHtml(lang) {
 </aside>`;
 }
 
-const DRAWER_SCRIPT = `<script>
-(function(){
+// スクリプトは素の JS として保持し、埋め込み時だけ <script> で包む。
+// (分割ダウンロードでは script.js にそのまま連結するため)
+const wrapScript = (js) => `<script>
+${js}
+<\/script>`;
+
+const DRAWER_JS = `(function(){
   var h=document.getElementById('wfHamburger'),d=document.getElementById('wfDrawer'),
       o=document.getElementById('wfOverlay'),c=document.getElementById('wfDrawerClose');
   function open(){d.classList.add('is-open');o.classList.add('is-open');}
@@ -88,8 +93,7 @@ const DRAWER_SCRIPT = `<script>
   document.querySelectorAll('.wf-drawer__head').forEach(function(head){
     head.addEventListener('click',function(){head.parentElement.classList.toggle('is-open');});
   });
-})();
-<\/script>`;
+})();`;
 
 const FOOTER_HTML = `<footer class="wf-footer">
   <div class="wf-container">
@@ -128,9 +132,8 @@ const FOOTER_HTML = `<footer class="wf-footer">
   <span class="wf-cookiebar__btn" onclick="document.getElementById('wfCookie').style.display='none'">同意する</span>
 </div>`;
 
-// 실제 동작하는 슬라이더 런타임(hero 등) — 프리뷰·다운로드 문서 공통
-const SLIDER_SCRIPT = `<script>
-(function(){
+// 実際に動作するスライダーランタイム(heroなど) — プレビュー・ダウンロード文書で共通
+const SLIDER_JS = `(function(){
   document.querySelectorAll('.wf-slider').forEach(function(sl){
     var track=sl.querySelector('.wf-slider__track');
     var slides=sl.querySelectorAll('.wf-slider__slide');
@@ -147,12 +150,10 @@ const SLIDER_SCRIPT = `<script>
     sl.addEventListener('mouseenter',stop);sl.addEventListener('mouseleave',play);
     go(0);play();
   });
-})();
-<\/script>`;
+})();`;
 
-// 캐러셀 화살표 / 탭 전환 / 갤러리 — 실제 동작 인터랙션(프리뷰·다운로드 공통)
-const INTERACTION_SCRIPT = `<script>
-(function(){
+// カルーセル矢印 / タブ切り替え / ギャラリー — 実際に動作するインタラクション(プレビュー・ダウンロード共通)
+const INTERACTION_JS = `(function(){
   document.querySelectorAll('.wf-carousel-wrap').forEach(function(w){
     var c=w.querySelector('.wf-carousel');if(!c)return;
     var p=w.querySelector('.wf-carousel__nav--prev'),x=w.querySelector('.wf-carousel__nav--next');
@@ -194,10 +195,9 @@ const INTERACTION_SCRIPT = `<script>
       setTimeout(showAll,1500);
     } else { showAll(); }
   })();
-})();
-<\/script>`;
+})();`;
 
-// 주석 표시 토글 버튼(다운로드 문서에서도 클라이언트/개발 뷰 전환)
+// 注記表示のトグルボタン(ダウンロード文書でもクライアント/開発ビューを切り替え)
 function annoToggle(showNotes) {
   const label = showNotes === false ? "注記: OFF" : "注記: ON";
   return `<button class="wf-anno-toggle" onclick="document.body.classList.toggle('wf-hide-anno');this.textContent=document.body.classList.contains('wf-hide-anno')?'注記: OFF':'注記: ON';">${label}</button>`;
@@ -207,34 +207,38 @@ function esc(s) {
   return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 }
 
-// 인라인 CSS의 주석 제거(출력물에 주석 노출 방지)
+// インラインCSSのコメント除去(出力物にコメントが露出しないように)
 function stripCssComments(css) {
   return String(css).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-// state.sections = [{ comp, opts, comment }]  →  <main> 안쪽 문자열
-export function renderSections(sections, lang) {
+// state.sections = [{ comp, opts, comment }]  →  <main> 内側の文字列
+// mark=true のとき、各セクションを display:contents のラッパーで包む(プレビュー内スクロール用)。
+// display:contents はボックスを生成しないためレイアウトに影響しない。ダウンロード物には含めない。
+export function renderSections(sections, lang, mark = false) {
   const ctx = { lang, notes: strings[lang].note };
   return sections
-    .map((s) => {
+    .map((s, i) => {
       const comp = catalog[s.comp];
       if (!comp) return `  <!-- unknown component: ${s.comp} -->`;
       const html = comp.render(s.opts || {}, ctx);
+      let out = html;
       if (s.comment && s.comment.trim()) {
         const cmt = `  <div class="wf-container" style="padding-top:14px;"><div class="wf-comment">${esc(s.comment.trim())}</div></div>`;
-        return cmt + "\n" + html;
+        out = cmt + "\n" + html;
       }
-      return html;
+      return mark ? `<div data-wf-sec="${i}" style="display:contents">\n${out}\n</div>` : out;
     })
     .join("\n\n");
 }
 
-// 전체 문서 조립. css = wireframe.css 원문 문자열.
-export function buildDocument(state, css) {
+// 文書全体の組み立て。css = wireframe.css の原文文字列。
+// opts.markSections=true でプレビュー用のセクションマーカーを付与。
+export function buildDocument(state, css, opts = {}) {
   const { lang, pageType, sections } = state;
   const t = i18n[lang];
   const bar = fmt(t.meta.previewBar, { page: pageType });
-  const body = renderSections(sections, lang);
+  const body = renderSections(sections, lang, !!opts.markSections);
   const bodyClass = state.showNotes === false ? "wf-hide-anno" : "";
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -256,7 +260,7 @@ ${annoToggle(state.showNotes)}
 
 ${headerHtml(lang)}
 
-${DRAWER_SCRIPT}
+${wrapScript(DRAWER_JS)}
 
 <main>
 ${body}
@@ -264,10 +268,157 @@ ${body}
 
 ${FOOTER_HTML}
 
-${SLIDER_SCRIPT}
+${wrapScript(SLIDER_JS)}
 
-${INTERACTION_SCRIPT}
+${wrapScript(INTERACTION_JS)}
 
 </body>
 </html>`;
+}
+
+// ======================================================================
+//  分割ダウンロード: index.html / style.css / script.js に分けて出力
+//  ・buildDocument() が1ファイルに全部埋め込むのに対し、こちらは外部参照にする
+//  ・スクリプトは <script> を剥がした素の JS を1本にまとめ、defer で末尾読み込み
+//    (3つとも DOM を即時に走査する IIFE なので、defer なら要素が揃った後に動く)
+// ======================================================================
+export function buildFiles(state, css, opts = {}) {
+  const { lang, pageType, sections } = state;
+  const t = i18n[lang];
+  const bar = fmt(t.meta.previewBar, { page: pageType });
+  const body = renderSections(sections, lang, false); // 出力物にプレビュー用マーカーは入れない
+  const bodyClass = state.showNotes === false ? "wf-hide-anno" : "";
+  const base = opts.base || ".";
+
+  const html = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[WIREFRAME] ${pageType.toUpperCase()} — ec-wireframe</title>
+<!-- ${fmt(t.meta.docComment, { page: pageType })} -->
+<link rel="stylesheet" href="${base}/style.css">
+<noscript><style>.wf-reveal{opacity:1 !important;transform:none !important;}</style></noscript>
+</head>
+<body class="${bodyClass}">
+
+${annoToggle(state.showNotes)}
+
+<div style="background:#111;color:#fff;padding:6px 16px;font-size:12px;text-align:center;">${bar}</div>
+
+${headerHtml(lang)}
+
+<main>
+${body}
+</main>
+
+${FOOTER_HTML}
+
+<script src="${base}/script.js" defer><\/script>
+
+</body>
+</html>`;
+
+  const js = `// ec-wireframe — ワイヤーフレームのインタラクション
+// ドロワー / スライダー / カルーセル・タブ・ギャラリー・FAQ・スクロール表示
+
+${DRAWER_JS}
+
+${SLIDER_JS}
+
+${INTERACTION_JS}
+`;
+
+  return {
+    "index.html": html,
+    "style.css": stripCssComments(css).trim() + "\n",
+    "script.js": js,
+  };
+}
+
+// ======================================================================
+//  マルチページ・プロジェクト出力
+//  複数ページ(TOP/一覧/詳細…)を1つの ZIP にまとめ、互いにリンクさせる。
+//  構成: index.html(目次) + <pageType>.html × N + style.css + script.js
+// ======================================================================
+
+// 各ページ上部に置く、姉妹ページへのナビゲーション
+function pagesNav(pageTypes, current, lang) {
+  const t = i18n[lang];
+  const links = pageTypes
+    .map((p) => {
+      const label = t.pageTypes[p] || p;
+      return p === current
+        ? `<strong style="color:#fff;">${label}</strong>`
+        : `<a href="./${p}.html" style="color:#9ecbff;">${label}</a>`;
+    })
+    .join(' <span style="opacity:.4;">/</span> ');
+  return `<div style="background:#1b2330;color:#cfd6e4;padding:6px 16px;font-size:12px;text-align:center;">
+  <a href="./index.html" style="color:#9ecbff;">INDEX</a> <span style="opacity:.4;">|</span> ${links}
+</div>`;
+}
+
+function projectIndexHtml(pageTypes, lang) {
+  const t = i18n[lang];
+  const items = pageTypes
+    .map((p) => `    <li><a href="./${p}.html">${t.pageTypes[p] || p}</a> <code>${p}.html</code></li>`)
+    .join("\n");
+  return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[WIREFRAME] プロジェクト目次 — ec-wireframe</title>
+<style>
+  body{margin:0;padding:40px 24px;background:#f4f5f7;color:#1f2430;
+    font-family:-apple-system,"Segoe UI","Yu Gothic UI",Meiryo,sans-serif;}
+  .box{max-width:640px;margin:0 auto;background:#fff;border:1px solid #dcdfe4;border-radius:12px;padding:28px 30px;}
+  h1{font-size:18px;margin:0 0 6px;}
+  p{font-size:13px;color:#6b7280;margin:0 0 20px;}
+  ul{list-style:none;margin:0;padding:0;}
+  li{border-bottom:1px solid #eef0f3;padding:12px 4px;font-size:14px;display:flex;justify-content:space-between;align-items:center;}
+  li:last-child{border-bottom:0;}
+  a{color:#2b6cb0;text-decoration:none;font-weight:600;}
+  a:hover{text-decoration:underline;}
+  code{font-size:11px;color:#9aa1ab;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>ワイヤーフレーム — プロジェクト目次</h1>
+    <p>各ページは互いにリンクしています。スタイルとスクリプトは style.css / script.js を共有します。</p>
+    <ul>
+${items}
+    </ul>
+  </div>
+</body>
+</html>`;
+}
+
+// state.pages から、中身のあるページだけを ZIP 用ファイル一式に変換
+export function buildProject(state, css, pageOrder) {
+  const lang = state.lang;
+  const pages = state.pages || {};
+  const order = (pageOrder || Object.keys(pages)).filter(
+    (p) => Array.isArray(pages[p]) && pages[p].length > 0
+  );
+  if (order.length === 0) return null;
+
+  const files = {};
+  for (const p of order) {
+    const one = buildFiles({ ...state, pageType: p, sections: pages[p] }, css);
+    // 姉妹ページへのナビを先頭に差し込む
+    files[`${p}.html`] = one["index.html"].replace(
+      "<body class=",
+      `<body data-wf-page="${p}" class=`
+    ).replace(
+      /(<body[^>]*>\n)/,
+      `$1\n${pagesNav(order, p, lang)}\n`
+    );
+    // style.css / script.js は全ページ共通なので1度だけ入れる
+    if (!files["style.css"]) files["style.css"] = one["style.css"];
+    if (!files["script.js"]) files["script.js"] = one["script.js"];
+  }
+  files["index.html"] = projectIndexHtml(order, lang);
+  return files;
 }
