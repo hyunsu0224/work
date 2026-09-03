@@ -1,3 +1,2 @@
-// version.js — アプリのバージョン(単一の情報源)
-// ※ package.json の "version" と一致させること。test/version.test.js が検証する。
-export const APP_VERSION = "2.15.1";
+// version.js — アプリ版数の単一情報源。package.json / README の履歴表と一致させること。
+export const APP_VERSION = "2.15.2";
