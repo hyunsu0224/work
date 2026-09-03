@@ -36,6 +36,7 @@ appJs = appJs.replace(/CSS\s*=\s*await\s*fetch\([^)]*\)\.then\([^;]*\);/, "CSS =
 //   漏れると「呼び出しはあるのに定義が無い」= 公開ページだけ ReferenceError になる。
 //   下のチェックで検出してビルドを止める。
 const MODULE_ORDER = [
+  "src/version.js",
   "src/i18n.js",
   "src/templates.js",
   "src/gallery.js",

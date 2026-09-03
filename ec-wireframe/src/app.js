@@ -5,6 +5,7 @@ import { i18n, strings } from "./i18n.js";
 import { buildDocument, buildFiles, buildProject } from "./export.js";
 import { zipStore } from "./zip.js";
 import { encodeState, decodeState } from "./share.js";
+import { APP_VERSION } from "./version.js";
 import { iconFor } from "./icons.js";
 import { gallery } from "./gallery.js";
 import { sanitize } from "./sanitize.js";
@@ -191,7 +192,7 @@ function renderTopbar() {
 
   $("#topbar").innerHTML = `
     <button id="btnPanel" class="btn btn-ico" title="${ui().panel}">◀ ${ui().panel}</button>
-    <div class="tb-title">${ui().appTitle}</div>
+    <div class="tb-title" title="v${APP_VERSION}">${ui().appTitle} <span class="tb-ver">v${APP_VERSION}</span></div>
     <label class="tb-field">${ui().pageType}
       <select id="selPage">${pageOpts}</select>
     </label>
@@ -884,7 +885,7 @@ function downloadZip() {
 // ======================================================================
 function guideHtml() {
   return `
-  <h2>使い方ガイド</h2>
+  <h2>使い方ガイド <span class="guide-ver">v${APP_VERSION}</span></h2>
   <p>ECサイトのローファイ・ワイヤーフレームを <b>組み立て → プレビュー → HTML出力</b> するツールです。色や画像は入れず、構造と配置だけを素早く確認します。</p>
 
   <h3>基本の流れ</h3>

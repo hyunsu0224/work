@@ -1,6 +1,6 @@
 {
   "name": "ec-wireframe",
-  "version": "1.0.0",
+  "version": "2.15.1",
   "description": "EC ワイヤーフレーム ビルダー — 依存なしの静的ビルダー",
   "private": true,
   "type": "module",
@@ -9,5 +9,7 @@
     "test": "node --test test/",
     "build": "node build-gallery.mjs && node build-static.mjs"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
