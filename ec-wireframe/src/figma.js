@@ -39,6 +39,10 @@ export function parseColor(css) {
   return null;
 }
 
+// 幅は切り上げないこと。子を四捨五入すると合計が親の内寸を超え、
+// 折り返しレイアウトで列が1つ落ちる(例: 220.8px×5列 が 221×5=1105+gap で溢れる)。
+const floorW = (v) => Math.floor(v);
+
 const px = (v) => {
   const n = parseFloat(v);
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
@@ -166,10 +170,16 @@ export function domToFigma(root, ctx) {
     // fixed/absolute は積み上げの流れに入れず、親からの相対座標で置く
     // (テキストだけの要素も対象になるため、分岐より前で決めておく)
     const pos = String(st.position || "static");
-    const abs =
-      (pos === "absolute" || pos === "fixed") && parentRect && Number.isFinite(rect.left) && Number.isFinite(parentRect.left)
-        ? { x: Math.round(rect.left - parentRect.left), y: Math.round(rect.top - parentRect.top) }
-        : null;
+    let abs = null;
+    if ((pos === "absolute" || pos === "fixed") && parentRect && Number.isFinite(rect.left) && Number.isFinite(parentRect.left)) {
+      const x = Math.round(rect.left - parentRect.left);
+      const y = Math.round(rect.top - parentRect.top);
+      abs = { x, y };
+      const fromRight = Math.round(parentRect.left + parentRect.width - (rect.left + rect.width));
+      const fromBottom = Math.round(parentRect.top + parentRect.height - (rect.top + rect.height));
+      if (fromRight < x) abs.r = fromRight;
+      if (fromBottom < y) abs.b = fromBottom;
+    }
     const withAbs = (n) => {
       if (n && abs) n.abs = abs;
       return n;
@@ -189,7 +199,7 @@ export function domToFigma(root, ctx) {
         if (!boxFill && !boxStroke && !boxRadius) {
           stats.nodes++;
           const n = textNode(chars, st, name);
-          n.w = Math.round(rect.width);
+          n.w = floorW(rect.width);
           n.h = Math.round(rect.height);
           return withAbs(n);
         }
@@ -197,7 +207,7 @@ export function domToFigma(root, ctx) {
         const box = {
           type: "FRAME",
           name,
-          w: Math.round(rect.width),
+          w: floorW(rect.width),
           h: Math.round(rect.height),
           fill: boxFill,
           radius: boxRadius,
@@ -214,7 +224,7 @@ export function domToFigma(root, ctx) {
     const node = {
       type: el.tagName === "IMG" ? "RECT" : "FRAME",
       name: String(el.className || "").split(" ")[0] || el.tagName.toLowerCase(),
-      w: Math.round(rect.width),
+      w: floorW(rect.width),
       h: Math.round(rect.height),
       fill: boxFill,
       radius: boxRadius,

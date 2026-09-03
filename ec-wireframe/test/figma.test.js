@@ -256,7 +256,8 @@ test("position:absolute/fixed は積み上げから外れ、相対座標を持�
   });
   const { node } = domToFigma(root, ctx);
   const bar = node.children.find((c) => c.name === "wf-cookiebar");
-  assert.deepStrictEqual(bar.abs, { x: 0, y: 740 });
+  assert.strictEqual(bar.abs.x, 0);
+  assert.strictEqual(bar.abs.y, 740);
   assert.strictEqual(node.children.find((c) => c.name === "main").abs, undefined);
 });
 
@@ -285,4 +286,32 @@ test("display:contents のラッパーは箱を作らないので中身を親に
   assert.strictEqual(node.children.length, 2);
   assert.deepStrictEqual(node.children.map((c) => c.name), ["wf-section", "wf-section"]);
   assert.strictEqual(node.children[0].text.chars, "中身A");
+});
+
+test("幅は切り捨てる(子の合計が親を超えて折り返さないように)", () => {
+  const root = el("div", { w: 1168, rect: { left: 0, top: 0 }, style: { display: "grid", gridTemplateColumns: "1fr 1fr" } });
+  root._rect.width = 1168.4;
+  const { node } = domToFigma(root, ctx);
+  assert.strictEqual(node.w, 1168);
+});
+
+test("絶対配置は近い辺からの距離も持つ(下端固定が画面外に飛ばないように)", () => {
+  const root = el("body", {
+    w: 1280, h: 3087, rect: { left: 0, top: 0 },
+    children: [el("div", { className: "wf-cookiebar", w: 1280, h: 58, rect: { left: 0, top: 3029 }, style: { position: "fixed" }, children: [txt("Cookie")] })],
+  });
+  const { node } = domToFigma(root, ctx);
+  const bar = node.children[0];
+  assert.strictEqual(bar.abs.y, 3029);
+  assert.strictEqual(bar.abs.b, 0); // 下端に張り付いている
+  assert.strictEqual(bar.abs.r, undefined); // 横は左寄せのまま
+});
+
+test("上寄せの絶対配置には下端距離を付けない", () => {
+  const root = el("div", {
+    w: 200, h: 200, rect: { left: 0, top: 0 },
+    children: [el("span", { className: "badge", w: 16, h: 16, rect: { left: 4, top: 4 }, style: { position: "absolute" }, children: [txt("0")] })],
+  });
+  const { node } = domToFigma(root, ctx);
+  assert.deepStrictEqual(node.children[0].abs, { x: 4, y: 4 });
 });

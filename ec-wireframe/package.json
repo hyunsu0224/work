@@ -1,6 +1,6 @@
 {
   "name": "ec-wireframe",
-  "version": "2.16.0",
+  "version": "2.16.1",
   "description": "EC ワイヤーフレーム ビルダー — 依存なしの静的ビルダー",
   "private": true,
   "type": "module",
