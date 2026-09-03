@@ -200,7 +200,7 @@ const INTERACTION_JS = `(function(){
 // 注記表示のトグルボタン(ダウンロード文書でもクライアント/開発ビューを切り替え)
 function annoToggle(showNotes) {
   const label = showNotes === false ? "注記: OFF" : "注記: ON";
-  return `<button class="wf-anno-toggle" onclick="document.body.classList.toggle('wf-hide-anno');this.textContent=document.body.classList.contains('wf-hide-anno')?'注記: OFF':'注記: ON';">${label}</button>`;
+  return `<button data-wf-chrome class="wf-anno-toggle" onclick="document.body.classList.toggle('wf-hide-anno');this.textContent=document.body.classList.contains('wf-hide-anno')?'注記: OFF':'注記: ON';">${label}</button>`;
 }
 
 function esc(s) {
@@ -256,7 +256,7 @@ ${stripCssComments(css)}
 
 ${annoToggle(state.showNotes)}
 
-<div style="background:#111;color:#fff;padding:6px 16px;font-size:12px;text-align:center;">${bar}</div>
+<div data-wf-chrome style="background:#111;color:#fff;padding:6px 16px;font-size:12px;text-align:center;">${bar}</div>
 
 ${headerHtml(lang)}
 

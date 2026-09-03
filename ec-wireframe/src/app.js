@@ -1,11 +1,12 @@
 // app.js — ビルダー UI コントローラー
 import { catalog, defaultOpts } from "./catalog.js";
 import { templates, palette, PAGE_TYPES, COMMON, LP_RICH } from "./templates.js";
-import { i18n, strings } from "./i18n.js";
+import { i18n, strings, fmt } from "./i18n.js";
 import { buildDocument, buildFiles, buildProject } from "./export.js";
 import { zipStore } from "./zip.js";
 import { encodeState, decodeState } from "./share.js";
 import { APP_VERSION } from "./version.js";
+import { domToFigma, buildFigmaDoc } from "./figma.js";
 import { iconFor } from "./icons.js";
 import { gallery } from "./gallery.js";
 import { sanitize } from "./sanitize.js";
@@ -220,6 +221,8 @@ function renderTopbar() {
         <button id="btnZip" class="tb-menu-item">${ui().downloadZip}</button>
         <button id="btnProject" class="tb-menu-item">${ui().downloadProject}</button>
         <button id="btnShare" class="tb-menu-item">${ui().shareLink}</button>
+        <button id="btnFigma" class="tb-menu-item">${ui().figmaCopy}</button>
+        <button id="btnFigmaSave" class="tb-menu-item">${ui().figmaSave}</button>
         <button id="btnCopy" class="tb-menu-item">${ui().copyHtml}</button>
         <button id="btnOpen" class="tb-menu-item">${ui().openTab}</button>
         <button id="btnReset" class="tb-menu-item">${ui().reset}</button>
@@ -280,6 +283,8 @@ function renderTopbar() {
   $("#btnZip").addEventListener("click", downloadZip);
   $("#btnProject").addEventListener("click", downloadProject);
   $("#btnShare").addEventListener("click", shareLink);
+  $("#btnFigma").addEventListener("click", () => figmaExport("copy"));
+  $("#btnFigmaSave").addEventListener("click", () => figmaExport("save"));
   $("#btnOpen").addEventListener("click", openFull);
   $("#btnCopy").addEventListener("click", copyHtml);
   $("#btnSave").addEventListener("click", saveJson);
@@ -825,6 +830,111 @@ function saveBlob(blob, filename) {
 function download() {
   const html = buildDocument(state, CSS);
   saveBlob(new Blob([html], { type: "text/html;charset=utf-8" }), `${state.pageType}-wireframe.html`);
+}
+
+// ======================================================================
+//  Figma 書き出し — 実際に描画されたプレビューを計測して Figma ノードツリーに変換
+//  ・オフスクリーンの iframe に PC 幅 / SP 幅で描画し、計算済みスタイルを読む
+//  ・CSS が唯一の情報源になるので、コンポーネント対応表の二重管理が発生しない
+// ======================================================================
+const FIGMA_WIDTHS = { pc: 1280, sp: 375 };
+
+// 指定幅で描画し、その DOM を Figma ノードツリーに変換して返す
+function captureAt(html, width) {
+  return new Promise((resolve) => {
+    const fr = document.createElement("iframe");
+    fr.setAttribute("aria-hidden", "true");
+    // 画面外に置く(display:none だとレイアウトが計算されず計測できない)
+    fr.style.cssText = `position:fixed;left:-10000px;top:0;width:${width}px;height:800px;border:0;visibility:hidden;`;
+    document.body.appendChild(fr);
+
+    const done = (res) => {
+      fr.remove();
+      resolve(res);
+    };
+    fr.addEventListener("load", () => {
+      try {
+        const doc = fr.contentDocument;
+        const win = fr.contentWindow;
+        // スクロール連動アニメは未発火だと opacity:0 のまま計測されるため強制的に表示させる
+        const st = doc.createElement("style");
+        st.textContent = "html{overflow-y:hidden !important;}.wf-reveal{opacity:1 !important;transform:none !important;}";
+        doc.head.appendChild(st);
+        fr.style.height = Math.max(800, doc.documentElement.scrollHeight) + "px";
+        void doc.body.offsetHeight; // 高さ変更後のレイアウトを確定させる
+        const out = domToFigma(doc.body, {
+          getStyle: (el) => win.getComputedStyle(el),
+          getRect: (el) => el.getBoundingClientRect(),
+        });
+        done(out);
+      } catch (_) {
+        done(null);
+      }
+    }, { once: true });
+    fr.srcdoc = html;
+  });
+}
+
+async function buildFigmaJson() {
+  syncActivePage();
+  const html = buildDocument(state, CSS);
+  const devs = state.device === "both" ? ["pc", "sp"] : [state.device];
+  const frames = [];
+  let nodes = 0;
+  let truncated = false;
+
+  for (const dev of devs) {
+    const out = await captureAt(html, FIGMA_WIDTHS[dev]);
+    if (!out || !out.node) continue;
+    nodes += out.stats.nodes;
+    truncated = truncated || out.stats.truncated;
+    frames.push({
+      name: `${state.pageType.toUpperCase()} / ${dev.toUpperCase()}`,
+      device: dev,
+      width: FIGMA_WIDTHS[dev],
+      node: out.node,
+    });
+  }
+  if (!frames.length) return null;
+  return {
+    doc: buildFigmaDoc(frames, {
+      appVersion: APP_VERSION,
+      pageType: state.pageType,
+      generatedAt: new Date().toISOString(),
+      truncated: truncated || undefined,
+    }),
+    nodes,
+    truncated,
+  };
+}
+
+async function figmaExport(mode) {
+  toast(ui().figmaBusy);
+  let res = null;
+  try {
+    res = await buildFigmaJson();
+  } catch (_) {
+    res = null;
+  }
+  if (!res) return toast(ui().figmaFailed);
+
+  const json = JSON.stringify(res.doc);
+  if (mode === "save") {
+    const file = `${state.pageType}-figma.json`;
+    saveBlob(new Blob([json], { type: "application/json;charset=utf-8" }), file);
+    toast(fmt(ui().figmaSaved, { file, n: res.nodes }));
+  } else {
+    try {
+      await navigator.clipboard.writeText(json);
+      toast(fmt(ui().figmaCopied, { n: res.nodes }));
+    } catch (_) {
+      // クリップボードが使えない環境ではファイル保存に切り替える
+      const file = `${state.pageType}-figma.json`;
+      saveBlob(new Blob([json], { type: "application/json;charset=utf-8" }), file);
+      toast(fmt(ui().figmaSaved, { file, n: res.nodes }));
+    }
+  }
+  if (res.truncated) setTimeout(() => toast(fmt(ui().figmaTruncated, { n: res.nodes })), 1900);
 }
 
 // 構成を URL に載せてコピー(サーバー不要・リンク1本で共有)

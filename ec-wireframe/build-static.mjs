@@ -46,6 +46,7 @@ const MODULE_ORDER = [
   "src/share.js",
   "src/zip.js",
   "src/export.js",
+  "src/figma.js",
 ];
 
 // src/ にあるのに MODULE_ORDER に無いファイルを検出(バンドル漏れ防止)
